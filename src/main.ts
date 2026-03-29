@@ -16,6 +16,10 @@ async function init() {
   const camera = new OrbitCamera(canvas);
   const renderer = new SplatRenderer(canvas, camera);
 
+  // Collaboration works regardless of WebGPU availability
+  const sync = new SyncManager('default-room');
+  const pins = new PinManager(canvas, sync);
+
   const gpuAvailable = await renderer.init();
   if (!gpuAvailable) {
     const ctx = canvas.getContext('2d')!;
@@ -35,10 +39,6 @@ async function init() {
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
-
-  // Collaboration
-  const sync = new SyncManager('default-room');
-  const pins = new PinManager(canvas, sync);
 }
 
 init();

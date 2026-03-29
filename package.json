@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "server": "npx tsx server/index.ts",
-    "test": "npx playwright test"
+    "test": "npx playwright test --config tests/playwright.config.ts"
   },
   "repository": {
     "type": "git",
@@ -22,6 +22,7 @@
   },
   "homepage": "https://github.com/bentonkt/SplatCast#readme",
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@types/ws": "^8.18.1",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2",

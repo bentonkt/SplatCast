@@ -20,3 +20,11 @@ export interface CameraState {
   up: [number, number, number];
   fov: number;
 }
+
+export interface CursorPresence {
+  userId: string;
+  color: string;
+  x: number;
+  y: number;
+  name: string;
+}

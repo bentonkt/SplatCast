@@ -1,8 +1,14 @@
 import { test, expect } from '@playwright/test';
 
+let roomCounter = 0;
+function uniqueRoom(prefix: string): string {
+  return `${prefix}-${Date.now()}-${roomCounter++}`;
+}
+
 // Helper: wait for app to finish initializing (canvas sized + either GPU or fallback text rendered)
-async function waitForAppReady(page: import('@playwright/test').Page) {
-  await page.goto('/');
+async function waitForAppReady(page: import('@playwright/test').Page, room?: string) {
+  const url = room ? `/?room=${room}` : '/';
+  await page.goto(url);
   // Canvas must be visible
   await expect(page.locator('canvas#canvas')).toBeVisible();
   // Wait for canvas to be sized (JS has run)
@@ -13,7 +19,7 @@ async function waitForAppReady(page: import('@playwright/test').Page) {
 }
 
 test('loads the app and renders canvas', async ({ page }) => {
-  await waitForAppReady(page);
+  await waitForAppReady(page, uniqueRoom('smoke-load'));
   const canvas = page.locator('canvas#canvas');
   await expect(canvas).toBeVisible();
   // Canvas should be full-viewport sized
@@ -24,7 +30,7 @@ test('loads the app and renders canvas', async ({ page }) => {
 });
 
 test('camera orbit — mouse drag rotates view', async ({ page }) => {
-  await waitForAppReady(page);
+  await waitForAppReady(page, uniqueRoom('smoke-orbit'));
   const canvas = page.locator('canvas#canvas');
 
   const box = await canvas.boundingBox();
@@ -44,7 +50,7 @@ test('camera orbit — mouse drag rotates view', async ({ page }) => {
 });
 
 test('scroll to zoom — wheel event on canvas', async ({ page }) => {
-  await waitForAppReady(page);
+  await waitForAppReady(page, uniqueRoom('smoke-zoom'));
   const canvas = page.locator('canvas#canvas');
 
   const box = await canvas.boundingBox();
@@ -61,7 +67,7 @@ test('scroll to zoom — wheel event on canvas', async ({ page }) => {
 });
 
 test('double-click places an annotation pin', async ({ page }) => {
-  await waitForAppReady(page);
+  await waitForAppReady(page, uniqueRoom('smoke-pin'));
   const canvas = page.locator('canvas#canvas');
 
   const box = await canvas.boundingBox();
@@ -77,7 +83,7 @@ test('double-click places an annotation pin', async ({ page }) => {
 });
 
 test('multiple double-clicks accumulate pins', async ({ page }) => {
-  await waitForAppReady(page);
+  await waitForAppReady(page, uniqueRoom('smoke-multi-pin'));
   const canvas = page.locator('canvas#canvas');
 
   const box = await canvas.boundingBox();
@@ -100,8 +106,9 @@ test('two users see synced annotations', async ({ browser }) => {
   const page2 = await context2.newPage();
 
   try {
-    await waitForAppReady(page1);
-    await waitForAppReady(page2);
+    const room = uniqueRoom('smoke-sync');
+    await waitForAppReady(page1, room);
+    await waitForAppReady(page2, room);
 
     await page1.waitForSelector('#pin-overlay', { timeout: 5000 });
     await page2.waitForSelector('#pin-overlay', { timeout: 5000 });

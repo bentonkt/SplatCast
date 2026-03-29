@@ -1,7 +1,6 @@
 # SplatCast Backlog
 
 ## In Progress
-- [ ] Multi-user cursor presence — show colored cursor dots where other users are looking, synced via Yjs awareness
 
 ## Up Next
 - [ ] Annotation types — add arrow and text label annotations in addition to pins
@@ -20,6 +19,7 @@
 ## Discovered
 
 ## Done
+- [x] Multi-user cursor presence — PR https://github.com/bentonkt/SplatCast/pull/1
 - [x] WebGPU Gaussian splat point renderer
 - [x] Orbit/pan/zoom camera controls
 - [x] Yjs WebSocket sync server

@@ -1,9 +1,9 @@
 # SplatCast Backlog
 
 ## In Progress
+- [ ] Annotation types — add arrow and text label annotations in addition to pins
 
 ## Up Next
-- [ ] Annotation types — add arrow and text label annotations in addition to pins
 - [ ] Freehand drawing annotations — draw on the scene with mouse, strokes synced via Yjs
 - [ ] Color-coded per-user annotations — assign consistent colors per userId
 - [ ] Room system — URL-based room IDs (/room/<id>), each room is a separate Yjs doc

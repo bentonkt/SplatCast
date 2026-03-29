@@ -1,9 +1,9 @@
 # SplatCast Backlog
 
 ## In Progress
+- [ ] Multi-user cursor presence — show colored cursor dots where other users are looking, synced via Yjs awareness
 
 ## Up Next
-- [ ] Multi-user cursor presence — show colored cursor dots where other users are looking, synced via Yjs awareness
 - [ ] Annotation types — add arrow and text label annotations in addition to pins
 - [ ] Freehand drawing annotations — draw on the scene with mouse, strokes synced via Yjs
 - [ ] Color-coded per-user annotations — assign consistent colors per userId

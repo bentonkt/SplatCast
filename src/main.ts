@@ -1,5 +1,7 @@
 import { OrbitCamera } from './renderer/camera';
 import { SplatRenderer, loadSplatFile } from './renderer/splat-renderer';
+import { SyncManager } from './collab/sync';
+import { PinManager } from './annotations/pins';
 
 async function init() {
   const canvas = document.getElementById('canvas') as HTMLCanvasElement;
@@ -33,6 +35,10 @@ async function init() {
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
+
+  // Collaboration
+  const sync = new SyncManager('default-room');
+  const pins = new PinManager(canvas, sync);
 }
 
 init();

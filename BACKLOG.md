@@ -1,0 +1,27 @@
+# SplatCast Backlog
+
+## In Progress
+
+## Up Next
+- [ ] Multi-user cursor presence — show colored cursor dots where other users are looking, synced via Yjs awareness
+- [ ] Annotation types — add arrow and text label annotations in addition to pins
+- [ ] Freehand drawing annotations — draw on the scene with mouse, strokes synced via Yjs
+- [ ] Color-coded per-user annotations — assign consistent colors per userId
+- [ ] Room system — URL-based room IDs (/room/<id>), each room is a separate Yjs doc
+- [ ] Annotation persistence — save/load annotation state to server or localStorage
+- [ ] Mobile touch controls — pinch to zoom, two-finger drag to orbit, tap to annotate
+- [ ] Improved splat rendering — sort splats by depth, implement alpha blending for transparency
+- [ ] Splat file format support — support .ply files in addition to .splat format
+- [ ] Loading UI — progress bar for large splat files, drag-and-drop file loading
+- [ ] Annotation labels — click a pin to add/edit a text label
+- [ ] User presence sidebar — show connected users with their colors
+- [ ] Undo/redo — Yjs undo manager for annotation changes
+
+## Discovered
+
+## Done
+- [x] WebGPU Gaussian splat point renderer
+- [x] Orbit/pan/zoom camera controls
+- [x] Yjs WebSocket sync server
+- [x] Click-to-place annotation pins with real-time sync
+- [x] Playwright e2e test suite (smoke, camera, annotations, multi-user)

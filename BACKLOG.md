@@ -1,7 +1,6 @@
 # SplatCast Backlog
 
 ## In Progress
-- [ ] Annotation types — add arrow and text label annotations in addition to pins
 
 ## Up Next
 - [ ] Freehand drawing annotations — draw on the scene with mouse, strokes synced via Yjs
@@ -19,6 +18,7 @@
 ## Discovered
 
 ## Done
+- [x] Annotation types — add arrow and text label annotations — PR https://github.com/bentonkt/SplatCast/pull/2
 - [x] Multi-user cursor presence — PR https://github.com/bentonkt/SplatCast/pull/1
 - [x] WebGPU Gaussian splat point renderer
 - [x] Orbit/pan/zoom camera controls

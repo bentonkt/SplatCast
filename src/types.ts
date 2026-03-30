@@ -116,6 +116,17 @@ export interface DeviationResult {
   count: number;
 }
 
+export interface FlythroughKeyframe {
+  id: string;
+  name: string;
+  theta: number;
+  phi: number;
+  radius: number;
+  target: [number, number, number];
+  duration: number; // seconds to reach this keyframe from previous
+  timestamp: number;
+}
+
 export type TaskPriority = 'low' | 'medium' | 'high';
 export type TaskStatus = 'open' | 'in-progress' | 'done';
 

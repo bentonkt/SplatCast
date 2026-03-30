@@ -20,6 +20,7 @@ import { TimelinePanel } from './collab/timeline';
 import { CrossSectionExporter } from './collab/cross-section';
 import { DefectDetector } from './collab/defect-detection';
 import { DeviationColormapPanel } from './collab/deviation-colormap';
+import { FlythroughPanel } from './collab/flythrough';
 import { parseRoute, generateRoomId, navigateToRoom } from './router';
 
 function showLobby() {
@@ -139,6 +140,9 @@ async function startViewer(roomId: string) {
 
   const deviationColormap = new DeviationColormapPanel(sync, renderer);
   void deviationColormap;
+
+  const flythroughPanel = new FlythroughPanel(canvas, sync, camera);
+  void flythroughPanel;
 
   const lassoPanel = new LassoPanel(canvas, sync, renderer, camera);
   void lassoPanel;

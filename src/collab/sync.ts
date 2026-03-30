@@ -1,6 +1,6 @@
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
-import { Annotation, Bookmark, ClipPlanes, CursorPresence, Defect, DeviationResult, OrbitalState, SpatialTask, Stroke, TourState, UserPresence } from '../types';
+import { Annotation, Bookmark, ClipPlanes, CursorPresence, Defect, DeviationResult, FlythroughKeyframe, OrbitalState, SpatialTask, Stroke, TourState, UserPresence } from '../types';
 import { Awareness } from 'y-protocols/awareness';
 
 export class SyncManager {
@@ -15,6 +15,7 @@ export class SyncManager {
   tasks: Y.Map<SpatialTask>;
   defects: Y.Map<string>;
   deviationMap: Y.Map<string>;
+  flythroughKeyframes: Y.Map<FlythroughKeyframe>;
   undoManager: Y.UndoManager;
 
   constructor(roomId: string, serverUrl = 'ws://localhost:4000') {
@@ -29,6 +30,7 @@ export class SyncManager {
     this.tasks = this.doc.getMap<SpatialTask>('spatialTasks');
     this.defects = this.doc.getMap<string>('defectsMap');
     this.deviationMap = this.doc.getMap<string>('deviationColormapMap');
+    this.flythroughKeyframes = this.doc.getMap<FlythroughKeyframe>('flythroughKeyframes');
     this.undoManager = new Y.UndoManager([this.annotationMap, this.strokes, this.bookmarks], { captureTimeout: 0 });
   }
 
@@ -319,6 +321,25 @@ export class SyncManager {
   onDeviationChange(callback: (result: DeviationResult | null) => void) {
     this.deviationMap.observe(() => {
       callback(this.getDeviationResult());
+    });
+  }
+
+  addFlythroughKeyframe(keyframe: FlythroughKeyframe) {
+    this.flythroughKeyframes.set(keyframe.id, keyframe);
+  }
+
+  removeFlythroughKeyframe(id: string) {
+    this.flythroughKeyframes.delete(id);
+  }
+
+  getFlythroughKeyframes(): FlythroughKeyframe[] {
+    return Array.from(this.flythroughKeyframes.values())
+      .sort((a, b) => a.timestamp - b.timestamp);
+  }
+
+  onFlythroughKeyframesChange(callback: (keyframes: FlythroughKeyframe[]) => void) {
+    this.flythroughKeyframes.observe(() => {
+      callback(this.getFlythroughKeyframes());
     });
   }
 

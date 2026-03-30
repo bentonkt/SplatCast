@@ -1,7 +1,6 @@
 # SplatCast Backlog
 
 ## In Progress
-- [ ] Guided tour playback — create an ordered sequence of bookmarks with transition animations that auto-play as a cinematic walkthrough, synced so all users watch together
 
 ## Up Next
 - [ ] Splat isolation/hiding — lasso-select a region of splats to hide or isolate, revealing occluded interior geometry; selection state synced via Yjs
@@ -12,6 +11,7 @@
 ## Discovered
 
 ## Done
+- [x] Guided tour playback — cinematic walkthrough of bookmarks synced across users — PR https://github.com/bentonkt/SplatCast/pull/20
 - [x] Clipping planes — interactive cross-section sliders to cut through the splat scene, synced across users — PR https://github.com/bentonkt/SplatCast/pull/19
 - [x] Annotation threading — reply to pins to create comment threads for review discussions — PR https://github.com/bentonkt/SplatCast/pull/18
 - [x] Screenshot export — capture the current viewport as PNG with annotations baked in — PR https://github.com/bentonkt/SplatCast/pull/17

@@ -7,7 +7,7 @@ function uniqueRoom(prefix: string): string {
 
 // Helper: wait for app to finish initializing (canvas sized + either GPU or fallback text rendered)
 async function waitForAppReady(page: import('@playwright/test').Page, room?: string) {
-  const url = room ? `/?room=${room}` : '/';
+  const url = room ? `/room/${room}` : '/';
   await page.goto(url);
   // Canvas must be visible
   await expect(page.locator('canvas#canvas')).toBeVisible();

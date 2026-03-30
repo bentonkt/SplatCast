@@ -8,9 +8,87 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { overflow: hidden; background: #000; }
     canvas { display: block; width: 100vw; height: 100vh; }
+
+    /* Lobby styles */
+    #lobby {
+      display: none;
+      position: fixed; inset: 0; z-index: 2000;
+      background: #1a1a2e;
+      color: #fff;
+      font-family: monospace;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+    }
+    #lobby.active { display: flex; }
+    #lobby h1 {
+      font-size: 48px;
+      letter-spacing: 2px;
+      color: #4ecdc4;
+    }
+    #lobby p {
+      font-size: 16px;
+      color: #888;
+      max-width: 400px;
+      text-align: center;
+      line-height: 1.5;
+    }
+    #lobby .lobby-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      align-items: center;
+      margin-top: 16px;
+    }
+    #lobby button {
+      background: #4ecdc4;
+      color: #1a1a2e;
+      border: none;
+      padding: 12px 32px;
+      font-size: 16px;
+      font-family: monospace;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      min-width: 240px;
+    }
+    #lobby button:hover { background: #45b7d1; }
+    #lobby .join-form {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+    #lobby input {
+      background: #16213e;
+      color: #fff;
+      border: 2px solid #333;
+      padding: 12px 16px;
+      font-size: 16px;
+      font-family: monospace;
+      border-radius: 6px;
+      width: 180px;
+    }
+    #lobby input::placeholder { color: #555; }
+    #lobby input:focus { outline: none; border-color: #4ecdc4; }
+    #lobby .join-btn {
+      min-width: auto;
+      padding: 12px 20px;
+    }
   </style>
 </head>
 <body>
+  <div id="lobby">
+    <h1>SplatCast</h1>
+    <p>Collaborative 3D Gaussian splat viewer. Create a room or join an existing one to start annotating together.</p>
+    <div class="lobby-actions">
+      <button id="create-room-btn">Create New Room</button>
+      <div class="join-form">
+        <input id="room-id-input" type="text" placeholder="Room ID" maxlength="32" />
+        <button id="join-room-btn" class="join-btn">Join</button>
+      </div>
+    </div>
+  </div>
   <canvas id="canvas"></canvas>
   <script type="module" src="./main.ts"></script>
 </body>

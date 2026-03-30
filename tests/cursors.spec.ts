@@ -6,7 +6,7 @@ function uniqueRoom(prefix: string): string {
 }
 
 async function waitForAppReady(page: import('@playwright/test').Page, room?: string) {
-  const url = room ? `/?room=${room}` : '/';
+  const url = room ? `/room/${room}` : '/';
   await page.goto(url);
   await expect(page.locator('canvas#canvas')).toBeVisible();
   await page.waitForFunction(() => {

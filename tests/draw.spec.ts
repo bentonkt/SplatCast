@@ -6,7 +6,7 @@ function uniqueRoom(): string {
 }
 
 async function waitForAppReady(page: import('@playwright/test').Page, room: string) {
-  await page.goto(`/?room=${room}`);
+  await page.goto(`/room/${room}`);
   await expect(page.locator('canvas#canvas')).toBeVisible();
   await page.waitForFunction(() => {
     const c = document.getElementById('canvas') as HTMLCanvasElement;

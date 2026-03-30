@@ -1,9 +1,9 @@
 # SplatCast Backlog
 
 ## In Progress
+- [ ] Annotation persistence — save/load annotation state to server or localStorage
 
 ## Up Next
-- [ ] Annotation persistence — save/load annotation state to server or localStorage
 - [ ] Mobile touch controls — pinch to zoom, two-finger drag to orbit, tap to annotate
 - [ ] Improved splat rendering — sort splats by depth, implement alpha blending for transparency
 - [ ] Splat file format support — support .ply files in addition to .splat format

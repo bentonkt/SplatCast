@@ -1,6 +1,6 @@
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
-import { Annotation, Bookmark, ClipPlanes, CursorPresence, OrbitalState, SpatialTask, Stroke, TourState, UserPresence } from '../types';
+import { Annotation, Bookmark, ClipPlanes, CursorPresence, Defect, OrbitalState, SpatialTask, Stroke, TourState, UserPresence } from '../types';
 import { Awareness } from 'y-protocols/awareness';
 
 export class SyncManager {
@@ -13,6 +13,7 @@ export class SyncManager {
   clipPlanes: Y.Map<number>;
   hiddenSplats: Y.Map<string>;
   tasks: Y.Map<SpatialTask>;
+  defects: Y.Map<string>;
   undoManager: Y.UndoManager;
 
   constructor(roomId: string, serverUrl = 'ws://localhost:4000') {
@@ -25,6 +26,7 @@ export class SyncManager {
     this.clipPlanes = this.doc.getMap<number>('clipPlanes');
     this.hiddenSplats = this.doc.getMap<string>('hiddenSplatsMap');
     this.tasks = this.doc.getMap<SpatialTask>('spatialTasks');
+    this.defects = this.doc.getMap<string>('defectsMap');
     this.undoManager = new Y.UndoManager([this.annotationMap, this.strokes, this.bookmarks], { captureTimeout: 0 });
   }
 
@@ -279,6 +281,24 @@ export class SyncManager {
   onTasksChange(callback: (tasks: SpatialTask[]) => void) {
     this.tasks.observe(() => {
       callback(this.getTasks());
+    });
+  }
+
+  setDefects(defects: Defect[]) {
+    this.doc.transact(() => {
+      this.defects.set('data', JSON.stringify(defects));
+    });
+  }
+
+  getDefects(): Defect[] {
+    const raw = this.defects.get('data');
+    if (!raw) return [];
+    return JSON.parse(raw) as Defect[];
+  }
+
+  onDefectsChange(callback: (defects: Defect[]) => void) {
+    this.defects.observe(() => {
+      callback(this.getDefects());
     });
   }
 

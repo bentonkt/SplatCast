@@ -367,6 +367,10 @@ export class SplatRenderer {
     return this.hiddenSet;
   }
 
+  getCanvas(): HTMLCanvasElement {
+    return this.canvas;
+  }
+
   getClipBounds(): { min: [number, number, number]; max: [number, number, number] } {
     return {
       min: [this.clipData[0], this.clipData[1], this.clipData[2]],

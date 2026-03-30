@@ -98,6 +98,17 @@ export interface OrbitalState {
 
 export type UserRole = 'viewer' | 'commenter' | 'editor';
 
+export type DefectType = 'density' | 'color' | 'opacity';
+
+export interface Defect {
+  id: string;
+  splatIndex: number;
+  position: [number, number, number];
+  type: DefectType;
+  severity: number;
+  description: string;
+}
+
 export type TaskPriority = 'low' | 'medium' | 'high';
 export type TaskStatus = 'open' | 'in-progress' | 'done';
 

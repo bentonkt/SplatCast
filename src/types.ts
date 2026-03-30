@@ -97,3 +97,17 @@ export interface OrbitalState {
 }
 
 export type UserRole = 'viewer' | 'commenter' | 'editor';
+
+export type TaskPriority = 'low' | 'medium' | 'high';
+export type TaskStatus = 'open' | 'in-progress' | 'done';
+
+export interface SpatialTask {
+  id: string;
+  title: string;
+  position: [number, number, number];
+  assignee: string;
+  priority: TaskPriority;
+  status: TaskStatus;
+  createdBy: string;
+  timestamp: number;
+}

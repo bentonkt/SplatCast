@@ -1,9 +1,9 @@
 # SplatCast Backlog
 
 ## In Progress
+- [ ] Measurement tool — click two points to measure distance with a synced line and label
 
 ## Up Next
-- [ ] Measurement tool — click two points to measure distance with a synced line and label
 - [ ] Screenshot export — capture the current viewport as PNG with annotations baked in
 - [ ] Annotation threading — reply to pins to create comment threads for review discussions
 - [ ] Clipping planes — interactive cross-section sliders to cut through the splat scene, synced across users

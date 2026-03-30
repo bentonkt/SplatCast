@@ -21,6 +21,7 @@ import { CrossSectionExporter } from './collab/cross-section';
 import { DefectDetector } from './collab/defect-detection';
 import { DeviationColormapPanel } from './collab/deviation-colormap';
 import { FlythroughPanel } from './collab/flythrough';
+import { WebXRManager } from './collab/webxr';
 import { parseRoute, generateRoomId, navigateToRoom } from './router';
 
 function showLobby() {
@@ -143,6 +144,9 @@ async function startViewer(roomId: string) {
 
   const flythroughPanel = new FlythroughPanel(canvas, sync, camera);
   void flythroughPanel;
+
+  const webxrManager = new WebXRManager(canvas, sync, camera, renderer);
+  void webxrManager;
 
   const lassoPanel = new LassoPanel(canvas, sync, renderer, camera);
   void lassoPanel;

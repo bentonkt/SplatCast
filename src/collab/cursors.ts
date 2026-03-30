@@ -31,11 +31,12 @@ export class CursorManager {
   }
 
   private onMouseMove = (e: MouseEvent) => {
+    const rect = this.canvas.getBoundingClientRect();
     const cursor: CursorPresence = {
       userId: this.userId,
       color: this.color,
-      x: e.clientX,
-      y: e.clientY,
+      x: (e.clientX - rect.left) / rect.width,
+      y: (e.clientY - rect.top) / rect.height,
       name: `User ${this.userId.slice(0, 4)}`,
     };
     this.sync.setLocalCursor(cursor);
@@ -102,9 +103,12 @@ export class CursorManager {
         this.cursorElements.set(clientId, el);
       }
 
+      const rect = this.canvas.getBoundingClientRect();
+      const pixelX = cursor.x * rect.width + rect.left;
+      const pixelY = cursor.y * rect.height + rect.top;
       el.style.display = '';
-      el.style.left = `${cursor.x - 6}px`;
-      el.style.top = `${cursor.y - 6}px`;
+      el.style.left = `${pixelX - 6}px`;
+      el.style.top = `${pixelY - 6}px`;
 
       const dot = el.querySelector('.cursor-dot') as HTMLDivElement;
       dot.style.background = cursor.color;

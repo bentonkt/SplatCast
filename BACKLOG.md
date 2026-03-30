@@ -1,9 +1,9 @@
 # SplatCast Backlog
 
 ## In Progress
+- [ ] Side-by-side scene comparison — load two splat files into split or overlay viewports with synced camera controls for reviewing changes between captures
 
 ## Up Next
-- [ ] Side-by-side scene comparison — load two splat files into split or overlay viewports with synced camera controls for reviewing changes between captures
 - [ ] Annotation export to JSON/CSV — export all annotations, measurements, threads, and bookmarks as structured data with 3D coordinates for external tools
 
 ## Discovered

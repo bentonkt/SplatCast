@@ -1,6 +1,6 @@
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
-import { Annotation, Bookmark, ClipPlanes, CursorPresence, Stroke, UserPresence } from '../types';
+import { Annotation, Bookmark, ClipPlanes, CursorPresence, Stroke, TourState, UserPresence } from '../types';
 import { Awareness } from 'y-protocols/awareness';
 
 export class SyncManager {
@@ -181,6 +181,27 @@ export class SyncManager {
   onClipPlanesChange(callback: (planes: ClipPlanes | null) => void) {
     this.clipPlanes.observe(() => {
       callback(this.getClipPlanes());
+    });
+  }
+
+  setTourState(state: TourState | null) {
+    this.awareness.setLocalStateField('tour', state);
+  }
+
+  getTourState(): TourState | null {
+    const states = this.awareness.getStates();
+    for (const [, state] of states) {
+      const tour = state['tour'] as TourState | undefined;
+      if (tour && tour.playing) {
+        return tour;
+      }
+    }
+    return null;
+  }
+
+  onTourStateChange(callback: (state: TourState | null) => void) {
+    this.awareness.on('change', () => {
+      callback(this.getTourState());
     });
   }
 

@@ -1,7 +1,6 @@
 # SplatCast Backlog
 
 ## In Progress
-- [ ] Measurement tool — click two points to measure distance with a synced line and label
 
 ## Up Next
 - [ ] Screenshot export — capture the current viewport as PNG with annotations baked in
@@ -11,6 +10,7 @@
 ## Discovered
 
 ## Done
+- [x] Measurement tool — click two points to measure distance with a synced line and label — PR https://github.com/bentonkt/SplatCast/pull/16
 - [x] Real Gaussian splat test fixtures — real 3DGS ChristmasTree scene (10K splats), full covariance from rotation quaternions, camera auto-framing — PR https://github.com/bentonkt/SplatCast/pull/15
 - [x] Viewpoint bookmarks — save named camera positions that any user can snap to — PR https://github.com/bentonkt/SplatCast/pull/14
 - [x] Undo/redo — Yjs undo manager for annotation changes — PR https://github.com/bentonkt/SplatCast/pull/13

@@ -6,11 +6,44 @@ import * as encoding from 'lib0/encoding';
 import * as decoding from 'lib0/decoding';
 import * as map from 'lib0/map';
 import { IncomingMessage } from 'http';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const PORT = Number(process.env.PORT) || 4000;
+const DATA_DIR = process.env.YJS_DATA_DIR || path.join(process.cwd(), 'data', 'rooms');
 
 const messageSync = 0;
 const messageAwareness = 1;
+
+function roomFilePath(roomName: string): string {
+  const safe = encodeURIComponent(roomName);
+  return path.join(DATA_DIR, `${safe}.yjs`);
+}
+
+function loadDocState(doc: Y.Doc, roomName: string): void {
+  const filePath = roomFilePath(roomName);
+  if (fs.existsSync(filePath)) {
+    try {
+      const data = fs.readFileSync(filePath);
+      Y.applyUpdate(doc, new Uint8Array(data));
+    } catch (err) {
+      console.error(`Failed to load state for room "${roomName}", starting fresh:`, err);
+      const corruptPath = filePath + '.corrupt';
+      try {
+        fs.renameSync(filePath, corruptPath);
+        console.error(`Moved corrupted file to ${corruptPath}`);
+      } catch {
+        // If we can't move it, just continue with a fresh doc
+      }
+    }
+  }
+}
+
+function saveDocState(doc: Y.Doc, roomName: string): void {
+  fs.mkdirSync(DATA_DIR, { recursive: true });
+  const state = Y.encodeStateAsUpdate(doc);
+  fs.writeFileSync(roomFilePath(roomName), Buffer.from(state));
+}
 
 // Per-room state
 const rooms = new Map<string, { doc: Y.Doc; awareness: awarenessProtocol.Awareness; conns: Map<WebSocket, Set<number>> }>();
@@ -18,6 +51,7 @@ const rooms = new Map<string, { doc: Y.Doc; awareness: awarenessProtocol.Awarene
 function getRoom(roomName: string) {
   return map.setIfUndefined(rooms, roomName, () => {
     const doc = new Y.Doc();
+    loadDocState(doc, roomName);
     const awareness = new awarenessProtocol.Awareness(doc);
     const conns = new Map<WebSocket, Set<number>>();
 
@@ -105,6 +139,7 @@ function setupWSConnection(ws: WebSocket, req: IncomingMessage) {
     conns.delete(ws);
     awarenessProtocol.removeAwarenessStates(awareness, Array.from(controlledIds ?? []), null);
     if (conns.size === 0) {
+      saveDocState(doc, roomName);
       rooms.delete(roomName);
     }
   });

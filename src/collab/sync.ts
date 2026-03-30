@@ -1,6 +1,6 @@
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
-import { Annotation, Bookmark, ClipPlanes, CursorPresence, Defect, DeviationResult, FlythroughKeyframe, OrbitalState, SpatialSubscription, SpatialTask, Stroke, TourState, UserPresence } from '../types';
+import { Annotation, Bookmark, ClipPlanes, CursorPresence, Defect, DeviationResult, FlythroughKeyframe, OrbitalState, SemanticRegion, SpatialSubscription, SpatialTask, Stroke, TourState, UserPresence } from '../types';
 import { Awareness } from 'y-protocols/awareness';
 
 export class SyncManager {
@@ -17,6 +17,7 @@ export class SyncManager {
   deviationMap: Y.Map<string>;
   flythroughKeyframes: Y.Map<FlythroughKeyframe>;
   subscriptions: Y.Map<SpatialSubscription>;
+  semanticRegions: Y.Map<SemanticRegion>;
   undoManager: Y.UndoManager;
 
   constructor(roomId: string, serverUrl = 'ws://localhost:4000') {
@@ -33,6 +34,7 @@ export class SyncManager {
     this.deviationMap = this.doc.getMap<string>('deviationColormapMap');
     this.flythroughKeyframes = this.doc.getMap<FlythroughKeyframe>('flythroughKeyframes');
     this.subscriptions = this.doc.getMap<SpatialSubscription>('spatialSubscriptions');
+    this.semanticRegions = this.doc.getMap<SemanticRegion>('semanticRegions');
     this.undoManager = new Y.UndoManager([this.annotationMap, this.strokes, this.bookmarks], { captureTimeout: 0 });
   }
 
@@ -360,6 +362,31 @@ export class SyncManager {
   onSubscriptionsChange(callback: (subs: SpatialSubscription[]) => void) {
     this.subscriptions.observe(() => {
       callback(this.getSubscriptions());
+    });
+  }
+
+  addSemanticRegion(region: SemanticRegion) {
+    this.semanticRegions.set(region.id, region);
+  }
+
+  updateSemanticRegion(id: string, updates: Partial<Pick<SemanticRegion, 'label' | 'color'>>) {
+    const existing = this.semanticRegions.get(id);
+    if (existing) {
+      this.semanticRegions.set(id, { ...existing, ...updates });
+    }
+  }
+
+  removeSemanticRegion(id: string) {
+    this.semanticRegions.delete(id);
+  }
+
+  getSemanticRegions(): SemanticRegion[] {
+    return Array.from(this.semanticRegions.values());
+  }
+
+  onSemanticRegionsChange(callback: (regions: SemanticRegion[]) => void) {
+    this.semanticRegions.observe(() => {
+      callback(this.getSemanticRegions());
     });
   }
 

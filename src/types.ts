@@ -149,3 +149,13 @@ export interface SpatialSubscription {
   createdBy: string;
   timestamp: number;
 }
+
+export interface SemanticRegion {
+  id: string;
+  label: string;
+  color: string;
+  min: [number, number, number];
+  max: [number, number, number];
+  createdBy: string;
+  timestamp: number;
+}

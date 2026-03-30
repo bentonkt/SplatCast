@@ -9,6 +9,11 @@
 - [ ] 2D drawing overlay registration — import 2D floor plans or elevation drawings (PDF/DXF) and pin-register them to the 3D splat scene so reviewers can cross-reference design intent against the as-built capture
 - [ ] RFI/submittal workflow integration — extend spatial tasks into formal Request for Information workflows with numbered sequences, required-response fields, due dates, and exportable logs matching Procore/BIM 360 formats
 - [ ] Multi-scene composite view — load and spatially register multiple separate splat files into a unified scene (e.g. combining scans from different trades or floors) with per-scene visibility toggles and spatial conflict detection
+- [ ] glTF/SPZ import support — load Gaussian splats from glTF files using the KHR_gaussian_splatting extension and compressed SPZ format, enabling interoperability with the emerging Khronos standard and up to 90% smaller file sizes than PLY
+- [ ] IFC model overlay — import IFC/BIM models and render them as transparent wireframe overlays aligned to the splat scene, allowing side-by-side comparison of design intent vs. as-built capture with per-element toggle and clash highlighting
+- [ ] Offline-first sync with conflict resolution — cache Yjs document state in IndexedDB so users can annotate while disconnected, with automatic merge and visual conflict markers when reconnecting to the collaboration server
+- [ ] Shareable public view links — generate read-only URLs with embedded camera position and active annotations that load without authentication, enabling stakeholders to review specific viewpoints without joining a live session
+- [ ] Splat scene LOD streaming — progressive level-of-detail loading that fetches coarse splats first for instant preview, then streams higher-detail regions based on camera proximity, reducing initial load time for large construction site captures
 
 ## Done
 - [x] Semantic region tagging — paint or lasso-select groups of splats and assign semantic labels (e.g. "structural column", "HVAC duct", "exterior wall") that persist across sessions, enabling filtered views by trade/discipline and searchable scene elements — PR https://github.com/bentonkt/SplatCast/pull/40

@@ -3,6 +3,7 @@
 ## In Progress
 
 ## Up Next
+- [ ] Real Gaussian splat test fixtures — replace synthetic sample.splat with a real .splat file from an actual 3DGS reconstruction (e.g., download a small scene like "bicycle" or "bonsai" from the original 3DGS paper datasets or Polycam). Keep it under 10MB for tests. Update the renderer to properly handle real covariances, opacity, and SH coefficients. Add a Playwright test that loads the real splat file and verifies the scene renders (canvas pixels should have varied colors, not just background). Keep the synthetic generator as a fallback.
 - [ ] Viewpoint bookmarks — save named camera positions that any user can snap to for referencing specific areas
 - [ ] Measurement tool — click two points to measure distance with a synced line and label
 - [ ] Screenshot export — capture the current viewport as PNG with annotations baked in

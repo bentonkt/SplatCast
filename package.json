@@ -23,12 +23,14 @@
   "homepage": "https://github.com/bentonkt/SplatCast#readme",
   "devDependencies": {
     "@playwright/test": "^1.58.2",
+    "@types/jszip": "^3.4.0",
     "@types/ws": "^8.18.1",
     "tsx": "^4.21.0",
     "typescript": "^6.0.2",
     "vite": "^8.0.3"
   },
   "dependencies": {
+    "jszip": "^3.10.1",
     "ws": "^8.20.0",
     "y-protocols": "^1.0.7",
     "y-websocket": "^3.0.0",

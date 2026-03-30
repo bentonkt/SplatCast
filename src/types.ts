@@ -140,3 +140,12 @@ export interface SpatialTask {
   createdBy: string;
   timestamp: number;
 }
+
+export interface SpatialSubscription {
+  id: string;
+  name: string;
+  min: [number, number, number];
+  max: [number, number, number];
+  createdBy: string;
+  timestamp: number;
+}

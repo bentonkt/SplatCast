@@ -22,6 +22,7 @@ import { DefectDetector } from './collab/defect-detection';
 import { DeviationColormapPanel } from './collab/deviation-colormap';
 import { FlythroughPanel } from './collab/flythrough';
 import { WebXRManager } from './collab/webxr';
+import { SpatialSubscriptionPanel } from './collab/spatial-subscriptions';
 import { parseRoute, generateRoomId, navigateToRoom } from './router';
 
 function showLobby() {
@@ -104,6 +105,7 @@ async function startViewer(roomId: string) {
   const heatmap = new HeatmapOverlay(canvas, sync);
   const taskManager = new TaskManager(canvas, sync);
   const timelinePanel = new TimelinePanel(sync, pins, draw);
+  const spatialSubs = new SpatialSubscriptionPanel(canvas, sync);
 
   // Suppress unused variable warnings — managers attach event listeners
   void pins;
@@ -116,6 +118,7 @@ async function startViewer(roomId: string) {
   void heatmap;
   void taskManager;
   void timelinePanel;
+  void spatialSubs;
 
   const gpuAvailable = await renderer.init();
   if (!gpuAvailable) {

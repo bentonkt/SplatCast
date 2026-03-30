@@ -1,9 +1,9 @@
 # SplatCast Backlog
 
 ## In Progress
+- [ ] Room system — URL-based room IDs (/room/<id>), each room is a separate Yjs doc
 
 ## Up Next
-- [ ] Room system — URL-based room IDs (/room/<id>), each room is a separate Yjs doc
 - [ ] Annotation persistence — save/load annotation state to server or localStorage
 - [ ] Mobile touch controls — pinch to zoom, two-finger drag to orbit, tap to annotate
 - [ ] Improved splat rendering — sort splats by depth, implement alpha blending for transparency

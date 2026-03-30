@@ -2,6 +2,7 @@ import { Annotation, AnnotationType } from '../types';
 import { SyncManager } from '../collab/sync';
 import { getUserColor, createColorIndicator } from '../collab/user-colors';
 import { captureScreenshot } from '../screenshot';
+import { exportJSON, exportCSV } from '../export';
 
 export class PinManager {
   private pins: Annotation[] = [];
@@ -105,6 +106,40 @@ export class PinManager {
     });
     toolbar.appendChild(screenshotBtn);
 
+    // Export JSON button
+    const jsonBtn = document.createElement('button');
+    jsonBtn.className = 'toolbar-btn';
+    jsonBtn.id = 'export-json-btn';
+    jsonBtn.textContent = '{}';
+    jsonBtn.title = 'Export annotations as JSON (E)';
+    jsonBtn.style.cssText = `
+      width:36px;height:36px;border:2px solid transparent;border-radius:6px;
+      background:rgba(255,255,255,0.1);cursor:pointer;font-size:14px;
+      display:flex;align-items:center;justify-content:center;
+      color:white;pointer-events:auto;font-family:monospace;
+    `;
+    jsonBtn.addEventListener('click', () => {
+      exportJSON(this.sync);
+    });
+    toolbar.appendChild(jsonBtn);
+
+    // Export CSV button
+    const csvBtn = document.createElement('button');
+    csvBtn.className = 'toolbar-btn';
+    csvBtn.id = 'export-csv-btn';
+    csvBtn.textContent = 'CSV';
+    csvBtn.title = 'Export annotations as CSV';
+    csvBtn.style.cssText = `
+      width:36px;height:36px;border:2px solid transparent;border-radius:6px;
+      background:rgba(255,255,255,0.1);cursor:pointer;font-size:11px;
+      display:flex;align-items:center;justify-content:center;
+      color:white;pointer-events:auto;font-family:monospace;font-weight:bold;
+    `;
+    csvBtn.addEventListener('click', () => {
+      exportCSV(this.sync);
+    });
+    toolbar.appendChild(csvBtn);
+
     this.updateToolbarSelection(toolbar);
     return toolbar;
   }
@@ -135,10 +170,13 @@ export class PinManager {
 
   private onKeyDown = (e: KeyboardEvent) => {
     if (e.repeat) return;
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
     if (e.key === 's' && !e.ctrlKey && !e.metaKey && !e.altKey) {
-      const target = e.target as HTMLElement;
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
       captureScreenshot(this.canvas);
+    }
+    if (e.key === 'e' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      exportJSON(this.sync);
     }
   };
 

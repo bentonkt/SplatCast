@@ -1,9 +1,9 @@
 # SplatCast Backlog
 
 ## In Progress
+- [ ] Semantic region tagging — paint or lasso-select groups of splats and assign semantic labels (e.g. "structural column", "HVAC duct", "exterior wall") that persist across sessions, enabling filtered views by trade/discipline and searchable scene elements
 
 ## Up Next
-- [ ] Semantic region tagging — paint or lasso-select groups of splats and assign semantic labels (e.g. "structural column", "HVAC duct", "exterior wall") that persist across sessions, enabling filtered views by trade/discipline and searchable scene elements
 
 ## Discovered
 - [ ] 4D timeline scrubber — load multiple splat captures of the same site taken on different dates and scrub through them on a timeline slider to visualize construction progress, with automatic alignment and the ability to flag areas behind schedule

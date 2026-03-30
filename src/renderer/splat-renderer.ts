@@ -522,7 +522,7 @@ export async function loadPlyFile(url: string): Promise<SplatData> {
     if (opacityProp) {
       const raw = readPlyValue(dataView, base + opacityProp.offset, opacityProp.type);
       // Gaussian splatting stores opacity as logit (sigmoid-encoded)
-      if (opacityProp.type === 'float' || opacityProp.type === 'float32') {
+      if (opacityProp.type === 'float' || opacityProp.type === 'float32' || opacityProp.type === 'double' || opacityProp.type === 'float64') {
         colors[i * 4 + 3] = 1.0 / (1.0 + Math.exp(-raw)); // sigmoid
       } else {
         colors[i * 4 + 3] = raw / 255;
@@ -542,7 +542,8 @@ export async function loadPlyFile(url: string): Promise<SplatData> {
 
 /** Load a splat scene file, auto-detecting format from URL extension */
 export async function loadSplatScene(url: string): Promise<SplatData> {
-  if (url.toLowerCase().endsWith('.ply')) {
+  const pathname = new URL(url, 'file://').pathname.toLowerCase();
+  if (pathname.endsWith('.ply')) {
     return loadPlyFile(url);
   }
   return loadSplatFile(url);

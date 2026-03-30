@@ -5,6 +5,7 @@ interface ExportData {
   exportedAt: string;
   annotations: Annotation[];
   threads: Record<string, { parent: Annotation; replies: Annotation[] }>;
+  orphanedReplies: Annotation[];
   strokes: Stroke[];
   bookmarks: Bookmark[];
 }
@@ -19,19 +20,32 @@ function gatherExportData(sync: SyncManager): ExportData {
   const replies = annotations.filter(a => a.parentId);
 
   const threads: Record<string, { parent: Annotation; replies: Annotation[] }> = {};
-  for (const parent of topLevel) {
-    const parentReplies = replies
-      .filter(r => r.parentId === parent.id)
-      .sort((a, b) => a.timestamp - b.timestamp);
-    if (parentReplies.length > 0) {
-      threads[parent.id] = { parent, replies: parentReplies };
+  const topLevelIds = new Set(topLevel.map(a => a.id));
+  const orphanedReplies: Annotation[] = [];
+
+  for (const reply of replies) {
+    if (reply.parentId && topLevelIds.has(reply.parentId)) {
+      if (!threads[reply.parentId]) {
+        const parent = topLevel.find(a => a.id === reply.parentId) as Annotation;
+        threads[reply.parentId] = { parent, replies: [] };
+      }
+      threads[reply.parentId].replies.push(reply);
+    } else {
+      orphanedReplies.push(reply);
     }
   }
+
+  // Sort replies within each thread by timestamp
+  for (const thread of Object.values(threads)) {
+    thread.replies.sort((a, b) => a.timestamp - b.timestamp);
+  }
+  orphanedReplies.sort((a, b) => a.timestamp - b.timestamp);
 
   return {
     exportedAt: new Date().toISOString(),
     annotations: topLevel,
     threads,
+    orphanedReplies,
     strokes,
     bookmarks,
   };
@@ -65,6 +79,11 @@ export function exportCSV(sync: SyncManager): void {
     for (const reply of thread.replies) {
       rows.push(annotationRow('reply', reply));
     }
+  }
+
+  // Orphaned replies (parent annotation was deleted)
+  for (const reply of data.orphanedReplies) {
+    rows.push(annotationRow('orphaned-reply', reply));
   }
 
   // Bookmarks
@@ -104,10 +123,15 @@ function annotationRow(category: string, a: Annotation): string[] {
 }
 
 function csvEscape(value: string): string {
-  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-    return `"${value.replace(/"/g, '""')}"`;
+  // Neutralize formula injection: prefix dangerous leading characters with a single quote
+  let sanitized = value;
+  if (/^[=+\-@\t\r]/.test(sanitized)) {
+    sanitized = `'${sanitized}`;
   }
-  return value;
+  if (sanitized.includes(',') || sanitized.includes('"') || sanitized.includes('\n')) {
+    return `"${sanitized.replace(/"/g, '""')}"`;
+  }
+  return sanitized;
 }
 
 function downloadFile(content: string, filename: string, mimeType: string): void {

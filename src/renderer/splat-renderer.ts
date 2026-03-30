@@ -54,8 +54,8 @@ export class SplatRenderer {
   private vertexCount = 0;
   // CPU-side copies for per-frame depth sorting
   private splatPositions: Float32Array | null = null;
-  private splatVertexData: Float32Array | null = null;
   private sortedIndices: Uint32Array | null = null;
+  private depthBuffer: Float32Array | null = null;
 
   constructor(private canvas: HTMLCanvasElement, private camera: OrbitCamera) {}
 
@@ -204,17 +204,18 @@ export class SplatRenderer {
     this.device.queue.writeBuffer(this.indexBuffer, 0, indices);
 
     this.splatPositions = positions;
-    this.splatVertexData = buf;
     this.sortedIndices = indices;
+    this.depthBuffer = new Float32Array(count);
     this.vertexCount = count;
   }
 
   /** Sort splat indices back-to-front by view-space depth */
   private sortByDepth(viewMatrix: Float32Array) {
-    if (!this.splatPositions || !this.sortedIndices) return;
+    if (!this.splatPositions || !this.sortedIndices || !this.depthBuffer) return;
 
     const positions = this.splatPositions;
     const indices = this.sortedIndices;
+    const depths = this.depthBuffer;
     const count = this.vertexCount;
 
     // Extract view-space Z row from view matrix (row 2 in column-major)
@@ -224,7 +225,6 @@ export class SplatRenderer {
     const m14 = viewMatrix[14];
 
     // Compute view-space depth for each splat
-    const depths = new Float32Array(count);
     for (let i = 0; i < count; i++) {
       const px = positions[i * 3];
       const py = positions[i * 3 + 1];
@@ -286,8 +286,8 @@ export class SplatRenderer {
     this.vertexBuffer = null;
     this.indexBuffer = null;
     this.splatPositions = null;
-    this.splatVertexData = null;
     this.sortedIndices = null;
+    this.depthBuffer = null;
   }
 }
 

@@ -1,7 +1,6 @@
 # SplatCast Backlog
 
 ## In Progress
-- [ ] Splat isolation/hiding — lasso-select a region of splats to hide or isolate, revealing occluded interior geometry; selection state synced via Yjs
 
 ## Up Next
 - [ ] Viewport follow mode — click a user's avatar to lock your camera to theirs in real time, with one-click unfollow to return to independent control
@@ -11,6 +10,7 @@
 ## Discovered
 
 ## Done
+- [x] Splat isolation/hiding — lasso-select to hide or isolate splat regions, synced across users — PR https://github.com/bentonkt/SplatCast/pull/21
 - [x] Guided tour playback — cinematic walkthrough of bookmarks synced across users — PR https://github.com/bentonkt/SplatCast/pull/20
 - [x] Clipping planes — interactive cross-section sliders to cut through the splat scene, synced across users — PR https://github.com/bentonkt/SplatCast/pull/19
 - [x] Annotation threading — reply to pins to create comment threads for review discussions — PR https://github.com/bentonkt/SplatCast/pull/18

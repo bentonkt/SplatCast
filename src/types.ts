@@ -5,9 +5,13 @@ export interface SplatData {
   count: number;
 }
 
+export type AnnotationType = 'pin' | 'arrow' | 'text';
+
 export interface Annotation {
   id: string;
+  type: AnnotationType;
   position: [number, number, number];
+  endPosition?: [number, number, number];
   label: string;
   color: string;
   userId: string;

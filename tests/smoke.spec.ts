@@ -76,10 +76,12 @@ test('double-click places an annotation pin', async ({ page }) => {
   // Wait for pin-overlay to be mounted (PinManager runs regardless of WebGPU)
   await page.waitForSelector('#pin-overlay', { timeout: 5000 });
 
+  const pinSelector = '#pin-overlay > div[data-annotation-type="pin"]';
+  const baseline = await page.locator(pinSelector).count();
+
   await page.mouse.dblclick(box.x + box.width / 2, box.y + box.height / 2);
 
-  const pin = page.locator('#pin-overlay > div');
-  await expect(pin).toHaveCount(1, { timeout: 5000 });
+  await expect(page.locator(pinSelector)).toHaveCount(baseline + 1, { timeout: 5000 });
 });
 
 test('multiple double-clicks accumulate pins', async ({ page }) => {
@@ -91,12 +93,14 @@ test('multiple double-clicks accumulate pins', async ({ page }) => {
 
   await page.waitForSelector('#pin-overlay', { timeout: 5000 });
 
+  const pinSelector = '#pin-overlay > div[data-annotation-type="pin"]';
+  const baseline = await page.locator(pinSelector).count();
+
   await page.mouse.dblclick(box.x + 100, box.y + 100);
   await page.mouse.dblclick(box.x + 200, box.y + 200);
   await page.mouse.dblclick(box.x + 300, box.y + 300);
 
-  const pins = page.locator('#pin-overlay > div');
-  await expect(pins).toHaveCount(3, { timeout: 5000 });
+  await expect(page.locator(pinSelector)).toHaveCount(baseline + 3, { timeout: 5000 });
 });
 
 test('two users see synced annotations', async ({ browser }) => {
@@ -120,14 +124,17 @@ test('two users see synced annotations', async ({ browser }) => {
     await page1.waitForTimeout(500);
     await page2.waitForTimeout(500);
 
+    const pinSelector = '#pin-overlay > div[data-annotation-type="pin"]';
+    const baseline1 = await page1.locator(pinSelector).count();
+    const baseline2 = await page2.locator(pinSelector).count();
+
     await page1.mouse.dblclick(box.x + 200, box.y + 200);
 
     // Verify pin appears on page1 first
-    await expect(page1.locator('#pin-overlay > div')).toHaveCount(1, { timeout: 5000 });
+    await expect(page1.locator(pinSelector)).toHaveCount(baseline1 + 1, { timeout: 5000 });
 
     // Verify sync to page2
-    const pinsOnPage2 = page2.locator('#pin-overlay > div');
-    await expect(pinsOnPage2).toHaveCount(1, { timeout: 10000 });
+    await expect(page2.locator(pinSelector)).toHaveCount(baseline2 + 1, { timeout: 10000 });
   } finally {
     await context1.close();
     await context2.close();

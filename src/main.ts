@@ -10,6 +10,7 @@ import { BookmarkPanel } from './collab/bookmarks';
 import { ClipPlanesPanel } from './collab/clip-planes';
 import { TourPanel } from './collab/tour';
 import { LassoPanel } from './collab/lasso';
+import { ComparePanel } from './collab/compare';
 import { parseRoute, generateRoomId, navigateToRoom } from './router';
 
 function showLobby() {
@@ -113,6 +114,8 @@ async function startViewer(roomId: string) {
   const lassoPanel = new LassoPanel(canvas, sync, renderer, camera);
   void lassoPanel;
 
+  const comparePanel = new ComparePanel(canvas, camera, renderer);
+
   // Loading overlay helpers
   const loadingOverlay = document.getElementById('loading-overlay')!;
   const progressBar = document.getElementById('loading-progress-bar')!;
@@ -161,7 +164,9 @@ async function startViewer(roomId: string) {
         }
       }
 
-      renderer.render();
+      if (!comparePanel.isActive()) {
+        renderer.render();
+      }
 
       // Broadcast local camera state at ~10fps, only when changed
       const now = performance.now();

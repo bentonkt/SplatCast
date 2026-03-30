@@ -1,6 +1,6 @@
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
-import { Annotation, Bookmark, ClipPlanes, CursorPresence, Defect, DeviationResult, FlythroughKeyframe, OrbitalState, SpatialTask, Stroke, TourState, UserPresence } from '../types';
+import { Annotation, Bookmark, ClipPlanes, CursorPresence, Defect, DeviationResult, FlythroughKeyframe, OrbitalState, SpatialSubscription, SpatialTask, Stroke, TourState, UserPresence } from '../types';
 import { Awareness } from 'y-protocols/awareness';
 
 export class SyncManager {
@@ -16,6 +16,7 @@ export class SyncManager {
   defects: Y.Map<string>;
   deviationMap: Y.Map<string>;
   flythroughKeyframes: Y.Map<FlythroughKeyframe>;
+  subscriptions: Y.Map<SpatialSubscription>;
   undoManager: Y.UndoManager;
 
   constructor(roomId: string, serverUrl = 'ws://localhost:4000') {
@@ -31,6 +32,7 @@ export class SyncManager {
     this.defects = this.doc.getMap<string>('defectsMap');
     this.deviationMap = this.doc.getMap<string>('deviationColormapMap');
     this.flythroughKeyframes = this.doc.getMap<FlythroughKeyframe>('flythroughKeyframes');
+    this.subscriptions = this.doc.getMap<SpatialSubscription>('spatialSubscriptions');
     this.undoManager = new Y.UndoManager([this.annotationMap, this.strokes, this.bookmarks], { captureTimeout: 0 });
   }
 
@@ -340,6 +342,24 @@ export class SyncManager {
   onFlythroughKeyframesChange(callback: (keyframes: FlythroughKeyframe[]) => void) {
     this.flythroughKeyframes.observe(() => {
       callback(this.getFlythroughKeyframes());
+    });
+  }
+
+  addSubscription(sub: SpatialSubscription) {
+    this.subscriptions.set(sub.id, sub);
+  }
+
+  removeSubscription(id: string) {
+    this.subscriptions.delete(id);
+  }
+
+  getSubscriptions(): SpatialSubscription[] {
+    return Array.from(this.subscriptions.values());
+  }
+
+  onSubscriptionsChange(callback: (subs: SpatialSubscription[]) => void) {
+    this.subscriptions.observe(() => {
+      callback(this.getSubscriptions());
     });
   }
 

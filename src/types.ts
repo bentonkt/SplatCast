@@ -5,7 +5,7 @@ export interface SplatData {
   count: number;
 }
 
-export type AnnotationType = 'pin' | 'arrow' | 'text' | 'measurement';
+export type AnnotationType = 'pin' | 'arrow' | 'text' | 'measurement' | 'audio';
 
 export interface Annotation {
   id: string;
@@ -18,6 +18,7 @@ export interface Annotation {
   timestamp: number;
   parentId?: string;
   resolved?: boolean;
+  audioData?: string;
 }
 
 export interface StrokePoint {

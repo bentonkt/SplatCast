@@ -20,6 +20,10 @@ export class PinManager {
   private openThreadPinId: string | null = null;
   private showResolved = true;
   private timeFilterCutoff: number | null = null;
+  private mediaRecorder: MediaRecorder | null = null;
+  private recordingChunks: Blob[] = [];
+  private recordingPosition: [number, number, number] | null = null;
+  private recordingOverlay: HTMLDivElement | null = null;
 
   constructor(
     private canvas: HTMLCanvasElement,
@@ -66,6 +70,7 @@ export class PinManager {
       { type: 'arrow', label: '\u{27A1}', title: 'Arrow (double-click start, then end)' },
       { type: 'text', label: '\u{1F524}', title: 'Text label (double-click to place)' },
       { type: 'measurement', label: '\u{1F4CF}', title: 'Measure (double-click two points)' },
+      { type: 'audio', label: '\u{1F3A4}', title: 'Audio note (double-click to record)' },
     ];
 
     for (const m of modes) {
@@ -326,7 +331,128 @@ export class PinManager {
         });
         this.measureStart = null;
       }
+    } else if (this.mode === 'audio') {
+      this.startAudioRecording(pos);
     }
+  }
+
+  private startAudioRecording(pos: [number, number, number]) {
+    if (this.mediaRecorder && this.mediaRecorder.state === 'recording') return;
+
+    this.recordingPosition = pos;
+    this.recordingChunks = [];
+
+    navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+      const recorder = new MediaRecorder(stream, { mimeType: 'audio/webm' });
+      this.mediaRecorder = recorder;
+
+      recorder.addEventListener('dataavailable', (e: BlobEvent) => {
+        if (e.data.size > 0) {
+          this.recordingChunks.push(e.data);
+        }
+      });
+
+      recorder.addEventListener('stop', () => {
+        stream.getTracks().forEach((t) => t.stop());
+        const blob = new Blob(this.recordingChunks, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          const base64 = reader.result as string;
+          if (this.recordingPosition) {
+            this.sync.addAnnotation({
+              id: crypto.randomUUID(),
+              type: 'audio',
+              position: this.recordingPosition,
+              label: '',
+              color: getUserColor(this.userId),
+              userId: this.userId,
+              timestamp: Date.now(),
+              audioData: base64,
+            });
+          }
+          this.recordingPosition = null;
+          this.removeRecordingOverlay();
+        };
+        reader.readAsDataURL(blob);
+      });
+
+      recorder.start();
+      this.showRecordingOverlay(pos);
+    }).catch(() => {
+      // Microphone access denied or unavailable
+      this.recordingPosition = null;
+    });
+  }
+
+  private showRecordingOverlay(pos: [number, number, number]) {
+    this.removeRecordingOverlay();
+    const { x, y } = this.ndcToScreen(pos);
+
+    const overlay = document.createElement('div');
+    overlay.id = 'audio-recording-overlay';
+    overlay.style.cssText = `
+      position:absolute;left:${x - 40}px;top:${y - 60}px;
+      padding:8px 12px;border-radius:8px;
+      background:rgba(220,50,50,0.9);color:white;
+      font:bold 13px system-ui,sans-serif;
+      pointer-events:auto;z-index:300;
+      display:flex;align-items:center;gap:8px;
+      box-shadow:0 4px 12px rgba(0,0,0,0.5);
+    `;
+
+    const pulse = document.createElement('span');
+    pulse.className = 'recording-pulse';
+    pulse.textContent = '\u{1F534}';
+    pulse.style.cssText = 'font-size:12px;animation:pulse 1s infinite;';
+    overlay.appendChild(pulse);
+
+    const label = document.createElement('span');
+    label.textContent = 'Recording…';
+    overlay.appendChild(label);
+
+    const stopBtn = document.createElement('button');
+    stopBtn.id = 'audio-stop-btn';
+    stopBtn.textContent = '\u23F9';
+    stopBtn.title = 'Stop recording';
+    stopBtn.style.cssText = `
+      width:28px;height:28px;border-radius:50%;border:2px solid white;
+      background:rgba(255,255,255,0.2);color:white;cursor:pointer;
+      font-size:14px;display:flex;align-items:center;justify-content:center;
+    `;
+    stopBtn.addEventListener('click', () => {
+      this.stopAudioRecording();
+    });
+    overlay.appendChild(stopBtn);
+
+    // Add pulse animation style if not already present
+    if (!document.getElementById('audio-pulse-style')) {
+      const style = document.createElement('style');
+      style.id = 'audio-pulse-style';
+      style.textContent = `@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.3; } }`;
+      document.head.appendChild(style);
+    }
+
+    this.recordingOverlay = overlay;
+    document.body.appendChild(overlay);
+  }
+
+  private removeRecordingOverlay() {
+    if (this.recordingOverlay) {
+      this.recordingOverlay.remove();
+      this.recordingOverlay = null;
+    }
+  }
+
+  private stopAudioRecording() {
+    if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+      this.mediaRecorder.stop();
+      this.mediaRecorder = null;
+    }
+  }
+
+  private playAudioNote(audioData: string) {
+    const audio = new Audio(audioData);
+    audio.play().catch(() => { /* playback failed */ });
   }
 
   private ndcToScreen(ndc: [number, number, number]): { x: number; y: number } {
@@ -363,6 +489,8 @@ export class PinManager {
         this.renderText(pin);
       } else if (annotationType === 'measurement') {
         this.renderMeasurement(pin);
+      } else if (annotationType === 'audio') {
+        this.renderAudio(pin);
       }
     }
 
@@ -806,7 +934,86 @@ export class PinManager {
     this.overlay.appendChild(svg);
   }
 
+  private renderAudio(pin: Annotation) {
+    const { x, y } = this.ndcToScreen(pin.position);
+
+    const container = document.createElement('div');
+    container.dataset.annotationType = 'audio';
+    container.dataset.annotationId = pin.id;
+    container.dataset.userId = pin.userId;
+    container.style.cssText = `
+      position:absolute;left:${x - 16}px;top:${y - 16}px;
+      pointer-events:auto;cursor:pointer;
+    `;
+
+    const icon = document.createElement('div');
+    icon.className = 'audio-icon';
+    icon.textContent = '\u{1F50A}';
+    icon.style.cssText = `
+      width:32px;height:32px;border-radius:50%;
+      background:${pin.resolved ? '#666' : pin.color};
+      border:2px solid ${pin.resolved ? '#999' : 'white'};
+      box-shadow:0 2px 6px rgba(0,0,0,0.5);
+      display:flex;align-items:center;justify-content:center;
+      font-size:16px;
+      ${pin.resolved ? 'opacity:0.5;' : ''}
+    `;
+    container.appendChild(icon);
+
+    // Label below
+    if (pin.label) {
+      const label = document.createElement('div');
+      label.className = 'pin-label';
+      label.dataset.pinLabel = 'true';
+      label.textContent = pin.label;
+      label.style.cssText = `
+        position:absolute;top:36px;left:50%;transform:translateX(-50%);
+        padding:2px 6px;border-radius:3px;white-space:nowrap;
+        background:rgba(30,30,50,0.85);color:#fff;
+        font:12px/1.3 system-ui,sans-serif;
+        border:1px solid ${pin.resolved ? '#666' : pin.color};
+        pointer-events:none;
+        ${pin.resolved ? 'opacity:0.5;text-decoration:line-through;' : ''}
+      `;
+      container.appendChild(label);
+    }
+
+    // Resolve button
+    const resolveBtn = document.createElement('button');
+    resolveBtn.className = 'resolve-btn';
+    resolveBtn.dataset.resolveBtn = 'true';
+    resolveBtn.textContent = pin.resolved ? '\u21A9' : '\u2713';
+    resolveBtn.title = pin.resolved ? 'Unresolve' : 'Resolve';
+    resolveBtn.style.cssText = `
+      position:absolute;top:-6px;left:-14px;
+      width:18px;height:18px;border-radius:50%;
+      background:${pin.resolved ? '#e67e22' : '#27ae60'};color:white;
+      border:1.5px solid white;cursor:pointer;font-size:11px;
+      display:flex;align-items:center;justify-content:center;
+      pointer-events:auto;padding:0;line-height:1;
+    `;
+    resolveBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.sync.updateAnnotation(pin.id, { resolved: !pin.resolved });
+    });
+    container.appendChild(resolveBtn);
+
+    container.title = `\u{1F3A4} Audio note — ${pin.userId} — ${new Date(pin.timestamp).toLocaleTimeString()}\nClick to play`;
+
+    // Click to play audio
+    container.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (pin.audioData) {
+        this.playAudioNote(pin.audioData);
+      }
+    });
+
+    this.overlay.appendChild(container);
+  }
+
   destroy() {
+    this.stopAudioRecording();
+    this.removeRecordingOverlay();
     this.canvas.removeEventListener('dblclick', this.onDoubleClick);
     this.canvas.removeEventListener('touchstart', this.onTouchStart);
     this.canvas.removeEventListener('touchend', this.onTouchEnd);

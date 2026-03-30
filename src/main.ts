@@ -95,9 +95,12 @@ async function startViewer(roomId: string) {
 
   // Load default sample
   showLoading();
-  const splatData = await loadSplatScene('/sample.splat', updateProgress);
-  renderer.loadSplats(splatData);
-  hideLoading();
+  try {
+    const splatData = await loadSplatScene('/sample.splat', updateProgress);
+    renderer.loadSplats(splatData);
+  } finally {
+    hideLoading();
+  }
 
   let animating = false;
   function startRenderLoop() {
@@ -148,15 +151,18 @@ async function startViewer(roomId: string) {
     if (!name.endsWith('.splat') && !name.endsWith('.ply')) return;
 
     showLoading();
-    const buffer = await file.arrayBuffer();
-    updateProgress(1);
+    try {
+      const buffer = await file.arrayBuffer();
+      updateProgress(1);
 
-    const data = name.endsWith('.ply')
-      ? parsePlyBuffer(buffer)
-      : parseSplatBuffer(buffer);
+      const data = name.endsWith('.ply')
+        ? parsePlyBuffer(buffer)
+        : parseSplatBuffer(buffer);
 
-    renderer.loadSplats(data);
-    hideLoading();
+      renderer.loadSplats(data);
+    } finally {
+      hideLoading();
+    }
   });
 }
 

@@ -1,9 +1,9 @@
 # SplatCast Backlog
 
 ## In Progress
+- [ ] Color-coded per-user annotations — assign consistent colors per userId
 
 ## Up Next
-- [ ] Color-coded per-user annotations — assign consistent colors per userId
 - [ ] Room system — URL-based room IDs (/room/<id>), each room is a separate Yjs doc
 - [ ] Annotation persistence — save/load annotation state to server or localStorage
 - [ ] Mobile touch controls — pinch to zoom, two-finger drag to orbit, tap to annotate

@@ -1,11 +1,13 @@
 import { Annotation, AnnotationType } from '../types';
 import { SyncManager } from '../collab/sync';
+import { getUserColor, createColorIndicator } from '../collab/user-colors';
 
 export class PinManager {
   private pins: Annotation[] = [];
   private overlay: HTMLDivElement;
   private toolbar: HTMLDivElement;
-  private userId: string;
+  private colorIndicator: HTMLDivElement;
+  readonly userId: string;
   private mode: AnnotationType = 'pin';
   private arrowStart: [number, number, number] | null = null;
 
@@ -22,6 +24,9 @@ export class PinManager {
 
     this.toolbar = this.createToolbar();
     document.body.appendChild(this.toolbar);
+
+    this.colorIndicator = createColorIndicator(this.userId);
+    document.body.appendChild(this.colorIndicator);
 
     this.canvas.addEventListener('dblclick', this.onDoubleClick);
     this.sync.onAnnotationsChange((annotations) => {
@@ -103,7 +108,7 @@ export class PinManager {
         type: 'pin',
         position: pos,
         label: '',
-        color: this.getColor(),
+        color: getUserColor(this.userId),
         userId: this.userId,
         timestamp: Date.now(),
       });
@@ -117,7 +122,7 @@ export class PinManager {
           position: this.arrowStart,
           endPosition: pos,
           label: '',
-          color: this.getColor(),
+          color: getUserColor(this.userId),
           userId: this.userId,
           timestamp: Date.now(),
         });
@@ -131,19 +136,13 @@ export class PinManager {
           type: 'text',
           position: pos,
           label,
-          color: this.getColor(),
+          color: getUserColor(this.userId),
           userId: this.userId,
           timestamp: Date.now(),
         });
       }
     }
   };
-
-  private getColor(): string {
-    const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dda0dd'];
-    const index = parseInt(this.userId, 16) % colors.length;
-    return colors[index];
-  }
 
   private ndcToScreen(ndc: [number, number, number]): { x: number; y: number } {
     return {
@@ -170,6 +169,7 @@ export class PinManager {
     const { x, y } = this.ndcToScreen(pin.position);
     const el = document.createElement('div');
     el.dataset.annotationType = 'pin';
+    el.dataset.userId = pin.userId;
     el.style.cssText = `
       position:absolute;left:${x - 8}px;top:${y - 8}px;
       width:16px;height:16px;border-radius:50%;
@@ -243,5 +243,6 @@ export class PinManager {
     this.canvas.removeEventListener('dblclick', this.onDoubleClick);
     this.overlay.remove();
     this.toolbar.remove();
+    this.colorIndicator.remove();
   }
 }

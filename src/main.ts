@@ -11,6 +11,7 @@ import { ClipPlanesPanel } from './collab/clip-planes';
 import { TourPanel } from './collab/tour';
 import { LassoPanel } from './collab/lasso';
 import { ComparePanel } from './collab/compare';
+import { HeatmapOverlay } from './annotations/heatmap';
 import { parseRoute, generateRoomId, navigateToRoom } from './router';
 
 function showLobby() {
@@ -87,6 +88,8 @@ async function startViewer(roomId: string) {
   canvas.addEventListener('wheel', unfollowOnInteraction);
   canvas.addEventListener('touchstart', unfollowOnInteraction);
 
+  const heatmap = new HeatmapOverlay(canvas, sync);
+
   // Suppress unused variable warnings — managers attach event listeners
   void pins;
   void cursors;
@@ -94,6 +97,7 @@ async function startViewer(roomId: string) {
   void undoRedo;
   void bookmarkPanel;
   void tourPanel;
+  void heatmap;
 
   const gpuAvailable = await renderer.init();
   if (!gpuAvailable) {

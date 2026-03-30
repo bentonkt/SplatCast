@@ -63,6 +63,8 @@ export class ComparePanel {
     this.toggleBtn.style.background = '#4ecdc4';
     this.toggleBtn.style.color = '#1a1a2e';
 
+    document.dispatchEvent(new CustomEvent('compare-mode-change', { detail: { active: true } }));
+
     // Hide main canvas
     this.mainCanvas.style.display = 'none';
 
@@ -183,6 +185,8 @@ export class ComparePanel {
     this.toggleBtn.style.background = 'rgba(255,255,255,0.12)';
     this.toggleBtn.style.color = '#fff';
     this.animating = false;
+
+    document.dispatchEvent(new CustomEvent('compare-mode-change', { detail: { active: false } }));
 
     window.removeEventListener('resize', this.onResize);
 

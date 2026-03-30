@@ -1,6 +1,7 @@
 import { SyncManager } from './sync';
 import { SplatRenderer } from '../renderer/splat-renderer';
 import { OrbitCamera } from '../renderer/camera';
+import { RoleManager } from './roles';
 
 export class LassoPanel {
   private btn: HTMLButtonElement;
@@ -254,6 +255,8 @@ export class LassoPanel {
       }
     }
 
+    const rm = (window as Record<string, unknown>)['__roleManager'] as RoleManager | undefined;
+    if (rm && !rm.canEdit()) return;
     this.renderer.setHiddenIndices(new Set(newHidden));
     this.sync.setHiddenSplats(newHidden);
     this.updateShowAllVisibility(newHidden.length);
@@ -261,6 +264,8 @@ export class LassoPanel {
   }
 
   private showAll() {
+    const rm = (window as Record<string, unknown>)['__roleManager'] as RoleManager | undefined;
+    if (rm && !rm.canEdit()) return;
     this.renderer.setHiddenIndices(new Set());
     this.sync.setHiddenSplats([]);
     this.updateShowAllVisibility(0);

@@ -12,6 +12,7 @@ import { TourPanel } from './collab/tour';
 import { LassoPanel } from './collab/lasso';
 import { ComparePanel } from './collab/compare';
 import { VersionDiffPanel } from './collab/version-diff';
+import { RoleManager } from './collab/roles';
 import { HeatmapOverlay } from './annotations/heatmap';
 import { SplatInspector } from './renderer/inspector';
 import { TimelinePanel } from './collab/timeline';
@@ -70,6 +71,9 @@ async function startViewer(roomId: string) {
   const cursors = new CursorManager(canvas, sync);
   const draw = new DrawManager(canvas, sync);
   const presence = new PresenceSidebar(sync);
+  const roleManager = new RoleManager(sync, presence.userId);
+  (window as Record<string, unknown>)['__roleManager'] = roleManager;
+  presence.setRoleManager(roleManager);
   const undoRedo = new UndoRedoToolbar(sync);
   const bookmarkPanel = new BookmarkPanel(sync, camera);
   const tourPanel = new TourPanel(sync, camera);
@@ -101,6 +105,7 @@ async function startViewer(roomId: string) {
   void undoRedo;
   void bookmarkPanel;
   void tourPanel;
+  void roleManager;
   void heatmap;
   void timelinePanel;
 

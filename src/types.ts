@@ -53,6 +53,7 @@ export interface UserPresence {
   userId: string;
   color: string;
   name: string;
+  role: UserRole;
 }
 
 export interface SceneBounds {
@@ -94,3 +95,5 @@ export interface OrbitalState {
   radius: number;
   target: [number, number, number];
 }
+
+export type UserRole = 'viewer' | 'commenter' | 'editor';

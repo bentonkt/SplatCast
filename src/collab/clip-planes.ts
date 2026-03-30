@@ -1,6 +1,7 @@
 import { ClipPlanes } from '../types';
 import { SyncManager } from './sync';
 import { SplatRenderer } from '../renderer/splat-renderer';
+import { RoleManager } from './roles';
 
 const DEFAULT_RANGE = 2;
 
@@ -176,6 +177,8 @@ export class ClipPlanesPanel {
   }
 
   private publishClipPlanes() {
+    const rm = (window as Record<string, unknown>)['__roleManager'] as RoleManager | undefined;
+    if (rm && !rm.canEdit()) return;
     const planes: ClipPlanes = {
       xMin: parseFloat(this.sliders['xMin'].value),
       xMax: parseFloat(this.sliders['xMax'].value),

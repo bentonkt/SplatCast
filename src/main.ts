@@ -2,6 +2,7 @@ import { OrbitCamera } from './renderer/camera';
 import { SplatRenderer, loadSplatFile } from './renderer/splat-renderer';
 import { SyncManager } from './collab/sync';
 import { PinManager } from './annotations/pins';
+import { CursorManager } from './collab/cursors';
 
 async function init() {
   const canvas = document.getElementById('canvas') as HTMLCanvasElement;
@@ -17,8 +18,10 @@ async function init() {
   const renderer = new SplatRenderer(canvas, camera);
 
   // Collaboration works regardless of WebGPU availability
-  const sync = new SyncManager('default-room');
+  const roomId = new URLSearchParams(window.location.search).get('room') || 'default-room';
+  const sync = new SyncManager(roomId);
   const pins = new PinManager(canvas, sync);
+  const cursors = new CursorManager(canvas, sync);
 
   const gpuAvailable = await renderer.init();
   if (!gpuAvailable) {

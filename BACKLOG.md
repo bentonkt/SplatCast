@@ -1,7 +1,6 @@
 # SplatCast Backlog
 
 ## In Progress
-- [ ] Annotation threading — reply to pins to create comment threads for review discussions
 
 ## Up Next
 - [ ] Clipping planes — interactive cross-section sliders to cut through the splat scene, synced across users
@@ -9,6 +8,7 @@
 ## Discovered
 
 ## Done
+- [x] Annotation threading — reply to pins to create comment threads for review discussions — PR https://github.com/bentonkt/SplatCast/pull/18
 - [x] Screenshot export — capture the current viewport as PNG with annotations baked in — PR https://github.com/bentonkt/SplatCast/pull/17
 - [x] Measurement tool — click two points to measure distance with a synced line and label — PR https://github.com/bentonkt/SplatCast/pull/16
 - [x] Real Gaussian splat test fixtures — real 3DGS ChristmasTree scene (10K splats), full covariance from rotation quaternions, camera auto-framing — PR https://github.com/bentonkt/SplatCast/pull/15

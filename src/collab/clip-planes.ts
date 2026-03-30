@@ -35,6 +35,7 @@ export class ClipPlanesPanel {
 
   setRange(extent: number) {
     this.range = Math.max(extent, 0.1);
+    const synced = this.sync.getClipPlanes();
     const axes = ['xMin', 'xMax', 'yMin', 'yMax', 'zMin', 'zMax'] as const;
     for (const key of axes) {
       const slider = this.sliders[key];
@@ -42,7 +43,12 @@ export class ClipPlanesPanel {
       const isMin = key.endsWith('Min');
       slider.min = String(-this.range);
       slider.max = String(this.range);
-      slider.value = String(isMin ? -this.range : this.range);
+      // Preserve synced clip values; only use defaults if none exist
+      if (synced) {
+        slider.value = String(synced[key]);
+      } else {
+        slider.value = String(isMin ? -this.range : this.range);
+      }
     }
   }
 

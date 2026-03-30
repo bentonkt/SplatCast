@@ -63,7 +63,6 @@ async function startViewer(roomId: string) {
   const presence = new PresenceSidebar(sync);
   const undoRedo = new UndoRedoToolbar(sync);
   const bookmarkPanel = new BookmarkPanel(sync, camera);
-  const clipPlanesPanel = new ClipPlanesPanel(sync, renderer);
 
   // Suppress unused variable warnings — managers attach event listeners
   void pins;
@@ -72,7 +71,6 @@ async function startViewer(roomId: string) {
   void presence;
   void undoRedo;
   void bookmarkPanel;
-  void clipPlanesPanel;
 
   const gpuAvailable = await renderer.init();
   if (!gpuAvailable) {
@@ -84,6 +82,11 @@ async function startViewer(roomId: string) {
     ctx.fillText('WebGPU not available in this browser', 40, 60);
     return;
   }
+
+  // Clip planes panel — must be created after renderer.init() so the GPU
+  // device/buffers exist when initial synced state is applied.
+  const clipPlanesPanel = new ClipPlanesPanel(sync, renderer);
+  void clipPlanesPanel;
 
   // Loading overlay helpers
   const loadingOverlay = document.getElementById('loading-overlay')!;

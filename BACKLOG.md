@@ -1,7 +1,6 @@
 # SplatCast Backlog
 
 ## In Progress
-- [ ] Splat file format support — support .ply files in addition to .splat format
 
 ## Up Next
 - [ ] Loading UI — progress bar for large splat files, drag-and-drop file loading
@@ -12,6 +11,7 @@
 ## Discovered
 
 ## Done
+- [x] Splat file format support — support .ply files in addition to .splat format — PR https://github.com/bentonkt/SplatCast/pull/9
 - [x] Improved splat rendering — sort splats by depth, implement alpha blending for transparency — PR https://github.com/bentonkt/SplatCast/pull/8
 - [x] Mobile touch controls — pinch to zoom, two-finger drag to orbit, tap to annotate — PR https://github.com/bentonkt/SplatCast/pull/7
 - [x] Annotation persistence — save/load Yjs doc state to disk on server — PR https://github.com/bentonkt/SplatCast/pull/6

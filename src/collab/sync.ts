@@ -17,7 +17,7 @@ export class SyncManager {
     this.annotationMap = this.doc.getMap<Annotation>('annotationMap');
     this.awareness = this.provider.awareness;
     this.strokes = this.doc.getArray<Stroke>('strokes');
-    this.undoManager = new Y.UndoManager([this.annotationMap, this.strokes]);
+    this.undoManager = new Y.UndoManager([this.annotationMap, this.strokes], { captureTimeout: 0 });
   }
 
   addAnnotation(annotation: Annotation) {

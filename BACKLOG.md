@@ -1,9 +1,9 @@
 # SplatCast Backlog
 
 ## In Progress
+- [ ] AI-assisted defect detection — run anomaly detection over splat density/color to automatically flag regions deviating from a reference model
 
 ## Up Next
-- [ ] AI-assisted defect detection — run anomaly detection over splat density/color to automatically flag regions deviating from a reference model
 
 ## Discovered
 

@@ -65,7 +65,15 @@ export class SyncManager {
   }
 
   onPresenceChange(callback: (users: UserPresence[]) => void) {
-    const handler = () => callback(this.getPresences());
+    let lastSnapshot = '';
+    const handler = () => {
+      const users = this.getPresences();
+      const snapshot = JSON.stringify(users);
+      if (snapshot !== lastSnapshot) {
+        lastSnapshot = snapshot;
+        callback(users);
+      }
+    };
     this.awareness.on('change', handler);
     this.awareness.on('update', handler);
   }

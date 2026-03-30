@@ -19,6 +19,7 @@ export class PinManager {
   private multiTouchActive = false;
   private openThreadPinId: string | null = null;
   private showResolved = true;
+  private timeFilterCutoff: number | null = null;
 
   constructor(
     private canvas: HTMLCanvasElement,
@@ -335,10 +336,23 @@ export class PinManager {
     };
   }
 
+  setTimeFilter(cutoff: number | null) {
+    this.timeFilterCutoff = cutoff;
+    this.renderPins();
+  }
+
+  getTimeFilter(): number | null {
+    return this.timeFilterCutoff;
+  }
+
   private renderPins() {
     this.overlay.innerHTML = '';
-    // Only render top-level annotations (not replies), filtered by resolve state
-    const topLevel = this.pins.filter((p) => !p.parentId && (this.showResolved || !p.resolved));
+    // Only render top-level annotations (not replies), filtered by resolve state and time
+    const topLevel = this.pins.filter((p) =>
+      !p.parentId
+      && (this.showResolved || !p.resolved)
+      && (this.timeFilterCutoff === null || p.timestamp <= this.timeFilterCutoff)
+    );
     for (const pin of topLevel) {
       const annotationType = pin.type ?? 'pin';
       if (annotationType === 'pin') {

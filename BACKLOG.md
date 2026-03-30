@@ -1,9 +1,9 @@
 # SplatCast Backlog
 
 ## In Progress
+- [ ] Annotation threading — reply to pins to create comment threads for review discussions
 
 ## Up Next
-- [ ] Annotation threading — reply to pins to create comment threads for review discussions
 - [ ] Clipping planes — interactive cross-section sliders to cut through the splat scene, synced across users
 
 ## Discovered

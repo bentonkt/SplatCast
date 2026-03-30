@@ -8,6 +8,7 @@ export class DrawManager {
   private drawingEnabled = false;
   private svgOverlay: SVGSVGElement;
   private userId: string;
+  private timeFilterCutoff: number | null = null;
 
   constructor(
     private canvas: HTMLCanvasElement,
@@ -155,9 +156,17 @@ export class DrawManager {
     return `M ${first.x} ${first.y}` + rest.map((p) => ` L ${p.x} ${p.y}`).join('');
   }
 
+  setTimeFilter(cutoff: number | null) {
+    this.timeFilterCutoff = cutoff;
+    this.renderStrokes();
+  }
+
   private renderStrokes() {
     this.svgOverlay.innerHTML = '';
-    for (const stroke of this.strokes) {
+    const visibleStrokes = this.timeFilterCutoff === null
+      ? this.strokes
+      : this.strokes.filter((s) => s.timestamp <= this.timeFilterCutoff!);
+    for (const stroke of visibleStrokes) {
       const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       path.setAttribute('d', this.pointsToPathData(stroke.points));
       path.setAttribute('stroke', stroke.color);

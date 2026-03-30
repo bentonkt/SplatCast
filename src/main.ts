@@ -13,6 +13,7 @@ import { LassoPanel } from './collab/lasso';
 import { ComparePanel } from './collab/compare';
 import { HeatmapOverlay } from './annotations/heatmap';
 import { SplatInspector } from './renderer/inspector';
+import { TimelinePanel } from './collab/timeline';
 import { parseRoute, generateRoomId, navigateToRoom } from './router';
 
 function showLobby() {
@@ -90,6 +91,7 @@ async function startViewer(roomId: string) {
   canvas.addEventListener('touchstart', unfollowOnInteraction);
 
   const heatmap = new HeatmapOverlay(canvas, sync);
+  const timelinePanel = new TimelinePanel(sync, pins, draw);
 
   // Suppress unused variable warnings — managers attach event listeners
   void pins;
@@ -99,6 +101,7 @@ async function startViewer(roomId: string) {
   void bookmarkPanel;
   void tourPanel;
   void heatmap;
+  void timelinePanel;
 
   const gpuAvailable = await renderer.init();
   if (!gpuAvailable) {

@@ -1,9 +1,9 @@
 # SplatCast Backlog
 
 ## In Progress
+- [ ] Spatial notification subscriptions — draw a 3D bounding box to "watch" a region and receive in-app notifications when other users add annotations, tasks, or measurements inside that volume
 
 ## Up Next
-- [ ] Spatial notification subscriptions — draw a 3D bounding box to "watch" a region and receive in-app notifications when other users add annotations, tasks, or measurements inside that volume
 - [ ] BCF issue export — export spatial tasks and annotations as BCF-format files (.bcfzip) with viewpoint snapshots and camera positions for integration with BIM coordination platforms
 
 ## Discovered

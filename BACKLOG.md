@@ -1,9 +1,9 @@
 # SplatCast Backlog
 
 ## In Progress
+- [ ] Loading UI — progress bar for large splat files, drag-and-drop file loading
 
 ## Up Next
-- [ ] Loading UI — progress bar for large splat files, drag-and-drop file loading
 - [ ] Annotation labels — click a pin to add/edit a text label
 - [ ] User presence sidebar — show connected users with their colors
 - [ ] Undo/redo — Yjs undo manager for annotation changes

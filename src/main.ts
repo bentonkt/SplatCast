@@ -7,6 +7,7 @@ import { DrawManager } from './annotations/draw';
 import { PresenceSidebar } from './collab/presence-sidebar';
 import { UndoRedoToolbar } from './collab/undo-redo';
 import { BookmarkPanel } from './collab/bookmarks';
+import { ClipPlanesPanel } from './collab/clip-planes';
 import { parseRoute, generateRoomId, navigateToRoom } from './router';
 
 function showLobby() {
@@ -82,6 +83,11 @@ async function startViewer(roomId: string) {
     return;
   }
 
+  // Clip planes panel — must be created after renderer.init() so the GPU
+  // device/buffers exist when initial synced state is applied.
+  const clipPlanesPanel = new ClipPlanesPanel(sync, renderer);
+  void clipPlanesPanel;
+
   // Loading overlay helpers
   const loadingOverlay = document.getElementById('loading-overlay')!;
   const progressBar = document.getElementById('loading-progress-bar')!;
@@ -110,6 +116,7 @@ async function startViewer(roomId: string) {
     renderer.loadSplats(splatData);
     const bounds = computeBounds(splatData);
     camera.frameBounds(bounds.center, bounds.extent);
+    clipPlanesPanel.setRange(bounds.extent * 1.5);
   } finally {
     hideLoading();
   }
@@ -174,6 +181,7 @@ async function startViewer(roomId: string) {
       renderer.loadSplats(data);
       const droppedBounds = computeBounds(data);
       camera.frameBounds(droppedBounds.center, droppedBounds.extent);
+      clipPlanesPanel.setRange(droppedBounds.extent * 1.5);
     } finally {
       hideLoading();
     }

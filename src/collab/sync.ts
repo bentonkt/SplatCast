@@ -1,6 +1,6 @@
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
-import { Annotation, Bookmark, CursorPresence, Stroke, UserPresence } from '../types';
+import { Annotation, Bookmark, ClipPlanes, CursorPresence, Stroke, UserPresence } from '../types';
 import { Awareness } from 'y-protocols/awareness';
 
 export class SyncManager {
@@ -10,6 +10,7 @@ export class SyncManager {
   awareness: Awareness;
   strokes: Y.Array<Stroke>;
   bookmarks: Y.Map<Bookmark>;
+  clipPlanes: Y.Map<number>;
   undoManager: Y.UndoManager;
 
   constructor(roomId: string, serverUrl = 'ws://localhost:4000') {
@@ -19,6 +20,7 @@ export class SyncManager {
     this.awareness = this.provider.awareness;
     this.strokes = this.doc.getArray<Stroke>('strokes');
     this.bookmarks = this.doc.getMap<Bookmark>('bookmarks');
+    this.clipPlanes = this.doc.getMap<number>('clipPlanes');
     this.undoManager = new Y.UndoManager([this.annotationMap, this.strokes, this.bookmarks], { captureTimeout: 0 });
   }
 
@@ -150,6 +152,35 @@ export class SyncManager {
   onBookmarksChange(callback: (bookmarks: Bookmark[]) => void) {
     this.bookmarks.observe(() => {
       callback(this.getBookmarks());
+    });
+  }
+
+  setClipPlanes(planes: ClipPlanes) {
+    this.doc.transact(() => {
+      this.clipPlanes.set('xMin', planes.xMin);
+      this.clipPlanes.set('xMax', planes.xMax);
+      this.clipPlanes.set('yMin', planes.yMin);
+      this.clipPlanes.set('yMax', planes.yMax);
+      this.clipPlanes.set('zMin', planes.zMin);
+      this.clipPlanes.set('zMax', planes.zMax);
+    });
+  }
+
+  getClipPlanes(): ClipPlanes | null {
+    if (!this.clipPlanes.has('xMin')) return null;
+    return {
+      xMin: this.clipPlanes.get('xMin')!,
+      xMax: this.clipPlanes.get('xMax')!,
+      yMin: this.clipPlanes.get('yMin')!,
+      yMax: this.clipPlanes.get('yMax')!,
+      zMin: this.clipPlanes.get('zMin')!,
+      zMax: this.clipPlanes.get('zMax')!,
+    };
+  }
+
+  onClipPlanesChange(callback: (planes: ClipPlanes | null) => void) {
+    this.clipPlanes.observe(() => {
+      callback(this.getClipPlanes());
     });
   }
 

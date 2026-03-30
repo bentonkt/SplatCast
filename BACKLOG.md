@@ -1,13 +1,13 @@
 # SplatCast Backlog
 
 ## In Progress
-- [ ] Annotation export to JSON/CSV — export all annotations, measurements, threads, and bookmarks as structured data with 3D coordinates for external tools
 
 ## Up Next
 
 ## Discovered
 
 ## Done
+- [x] Annotation export to JSON/CSV — export all annotations, measurements, threads, and bookmarks as structured data with 3D coordinates for external tools — PR https://github.com/bentonkt/SplatCast/pull/24
 - [x] Side-by-side scene comparison — load two splat files into split or overlay viewports with synced camera controls for reviewing changes between captures — PR https://github.com/bentonkt/SplatCast/pull/23
 - [x] Viewport follow mode — click a user's avatar to lock your camera to theirs in real time, with one-click unfollow — PR https://github.com/bentonkt/SplatCast/pull/22
 - [x] Splat isolation/hiding — lasso-select to hide or isolate splat regions, synced across users — PR https://github.com/bentonkt/SplatCast/pull/21

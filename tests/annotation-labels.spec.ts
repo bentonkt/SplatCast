@@ -54,12 +54,13 @@ test('typing a label and pressing Enter saves it to the pin', async ({ page }) =
   await page.locator(pinSelector).first().click();
   await expect(page.locator('#pin-label-input')).toBeVisible({ timeout: 3000 });
 
-  // Type a label and press Enter
+  // Type a label and press Enter (saves label, focus moves to reply input)
   await page.locator('#pin-label-input').fill('Test Label');
   await page.keyboard.press('Enter');
 
-  // Editor should close
-  await expect(page.locator('#pin-label-input')).toHaveCount(0, { timeout: 3000 });
+  // Close the thread panel
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#thread-panel')).toHaveCount(0, { timeout: 3000 });
 
   // Label should appear on the pin
   await expect(page.locator('[data-pin-label="true"]')).toHaveText('Test Label', { timeout: 5000 });
@@ -83,6 +84,10 @@ test('editing a label updates the existing text', async ({ page }) => {
   await page.locator(pinSelector).first().click();
   await page.locator('#pin-label-input').fill('First');
   await page.keyboard.press('Enter');
+
+  // Close thread panel
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#thread-panel')).toHaveCount(0, { timeout: 3000 });
   await expect(page.locator('[data-pin-label="true"]')).toHaveText('First', { timeout: 5000 });
 
   // Edit label — click pin again
@@ -92,6 +97,9 @@ test('editing a label updates the existing text', async ({ page }) => {
   await page.locator('#pin-label-input').fill('Updated');
   await page.keyboard.press('Enter');
 
+  // Close thread panel
+  await page.keyboard.press('Escape');
+  await expect(page.locator('#thread-panel')).toHaveCount(0, { timeout: 3000 });
   await expect(page.locator('[data-pin-label="true"]')).toHaveText('Updated', { timeout: 5000 });
 });
 

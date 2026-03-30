@@ -26,7 +26,7 @@ export class SyncManager {
     this.annotationMap.set(annotation.id, annotation);
   }
 
-  updateAnnotation(id: string, updates: Partial<Pick<Annotation, 'label'>>) {
+  updateAnnotation(id: string, updates: Partial<Pick<Annotation, 'label' | 'parentId'>>) {
     const existing = this.annotationMap.get(id);
     if (existing) {
       this.annotationMap.set(id, { ...existing, ...updates });
@@ -41,6 +41,12 @@ export class SyncManager {
 
   getAnnotations(): Annotation[] {
     return Array.from(this.annotationMap.values());
+  }
+
+  getReplies(parentId: string): Annotation[] {
+    return this.getAnnotations()
+      .filter((a) => a.parentId === parentId)
+      .sort((a, b) => a.timestamp - b.timestamp);
   }
 
   setLocalCursor(cursor: CursorPresence) {

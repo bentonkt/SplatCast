@@ -133,6 +133,7 @@ export class PinManager {
   }
 
   private onKeyDown = (e: KeyboardEvent) => {
+    if (e.repeat) return;
     if (e.key === 's' && !e.ctrlKey && !e.metaKey && !e.altKey) {
       const target = e.target as HTMLElement;
       if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;

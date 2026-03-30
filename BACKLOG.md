@@ -1,9 +1,9 @@
 # SplatCast Backlog
 
 ## In Progress
+- [ ] Clipping planes — interactive cross-section sliders to cut through the splat scene, synced across users
 
 ## Up Next
-- [ ] Clipping planes — interactive cross-section sliders to cut through the splat scene, synced across users
 
 ## Discovered
 

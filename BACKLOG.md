@@ -1,13 +1,13 @@
 # SplatCast Backlog
 
 ## In Progress
-- [ ] AI-assisted defect detection — run anomaly detection over splat density/color to automatically flag regions deviating from a reference model
 
 ## Up Next
 
 ## Discovered
 
 ## Done
+- [x] AI-assisted defect detection — run anomaly detection over splat density/color to automatically flag regions deviating from a reference model — PR https://github.com/bentonkt/SplatCast/pull/34
 - [x] Cross-section 2D export — define arbitrary slice planes and export the resulting cross-section as a dimensioned 2D SVG for architects and engineers — PR https://github.com/bentonkt/SplatCast/pull/33
 - [x] Spatial anchored tasks — attach to-do items to 3D regions with assignee, priority, and status fields, turning review comments into tracked work items — PR https://github.com/bentonkt/SplatCast/pull/32
 - [x] Role-based permissions — assign viewer, commenter, or editor roles per user so stakeholders can review without accidentally modifying scene state — PR https://github.com/bentonkt/SplatCast/pull/31

@@ -155,6 +155,14 @@ export class OrbitCamera {
     return perspective(this.fov * (Math.PI / 180), aspect, 0.01, 1000);
   }
 
+  /** Auto-frame the camera to view a bounding box defined by center and extent */
+  frameBounds(center: [number, number, number], extent: number) {
+    this.target = center;
+    // Place camera far enough to see the whole extent (based on FOV)
+    const halfFov = (this.fov / 2) * (Math.PI / 180);
+    this.radius = Math.max(1, extent / Math.tan(halfFov));
+  }
+
   destroy() {
     this.canvas.removeEventListener('mousedown', this.onMouseDown);
     window.removeEventListener('mousemove', this.onMouseMove);

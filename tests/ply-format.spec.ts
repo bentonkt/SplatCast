@@ -110,17 +110,17 @@ test('loadSplatScene detects .ply and .splat extensions correctly', async ({ pag
 
   expect(results.splatOk).toBe(true);
   expect(results.plyOk).toBe(true);
-  // sample.splat: 100 splats * 32 bytes = 3200
-  expect(results.splatSize).toBe(3200);
+  // sample.splat: 10000 real splats * 32 bytes = 320000
+  expect(results.splatSize).toBe(320000);
   // sample.ply: header + 100 * 56 bytes
   expect(results.plySize).toBeGreaterThan(3200);
 });
 
-test('PLY and SPLAT produce same number of splats from sample files', async ({ page }) => {
+test('PLY and SPLAT sample files parse correctly', async ({ page }) => {
   const room = uniqueRoom('ply-vs-splat');
   await waitForAppReady(page, room);
 
-  // Both sample files have 100 splats
+  // sample.splat has 10000 real splats; sample.ply has 100 synthetic splats
   const counts = await page.evaluate(async () => {
     const splatResp = await fetch('/sample.splat');
     const splatBuf = await splatResp.arrayBuffer();
@@ -141,7 +141,7 @@ test('PLY and SPLAT produce same number of splats from sample files', async ({ p
     return { splatCount, plyCount };
   });
 
-  expect(counts.splatCount).toBe(100);
+  expect(counts.splatCount).toBe(10000);
   expect(counts.plyCount).toBe(100);
 });
 

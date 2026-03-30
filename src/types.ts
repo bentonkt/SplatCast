@@ -52,6 +52,11 @@ export interface UserPresence {
   name: string;
 }
 
+export interface SceneBounds {
+  center: [number, number, number];
+  extent: number;
+}
+
 export interface Bookmark {
   id: string;
   name: string;

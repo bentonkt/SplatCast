@@ -1,13 +1,13 @@
 # SplatCast Backlog
 
 ## In Progress
-- [ ] BCF issue export — export spatial tasks and annotations as BCF-format files (.bcfzip) with viewpoint snapshots and camera positions for integration with BIM coordination platforms
 
 ## Up Next
 
 ## Discovered
 
 ## Done
+- [x] BCF issue export — export spatial tasks and annotations as BCF-format files (.bcfzip) with viewpoint snapshots and camera positions for integration with BIM coordination platforms — PR https://github.com/bentonkt/SplatCast/pull/39
 - [x] Spatial notification subscriptions — draw a 3D bounding box to "watch" a region and receive in-app notifications when other users add annotations, tasks, or measurements inside that volume — PR https://github.com/bentonkt/SplatCast/pull/38
 - [x] WebXR immersive viewing — enter the shared splat scene in AR or VR via the WebXR Device API, with annotations and presence synced across flat-screen and immersive users — PR https://github.com/bentonkt/SplatCast/pull/37
 - [x] Camera flythrough video export — keyframe-based camera animation timeline with smooth interpolation and WebM export, annotations baked into the flythrough for stakeholder presentations — PR https://github.com/bentonkt/SplatCast/pull/36

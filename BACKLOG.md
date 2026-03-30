@@ -1,9 +1,9 @@
 # SplatCast Backlog
 
 ## In Progress
+- [ ] Improved splat rendering — sort splats by depth, implement alpha blending for transparency
 
 ## Up Next
-- [ ] Improved splat rendering — sort splats by depth, implement alpha blending for transparency
 - [ ] Splat file format support — support .ply files in addition to .splat format
 - [ ] Loading UI — progress bar for large splat files, drag-and-drop file loading
 - [ ] Annotation labels — click a pin to add/edit a text label

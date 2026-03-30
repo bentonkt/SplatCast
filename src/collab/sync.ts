@@ -1,6 +1,6 @@
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
-import { Annotation, CursorPresence, Stroke } from '../types';
+import { Annotation, CursorPresence, Stroke, UserPresence } from '../types';
 import { Awareness } from 'y-protocols/awareness';
 
 export class SyncManager {
@@ -58,6 +58,26 @@ export class SyncManager {
 
   getLocalClientId(): number {
     return this.awareness.clientID;
+  }
+
+  setLocalPresence(presence: UserPresence) {
+    this.awareness.setLocalStateField('presence', presence);
+  }
+
+  onPresenceChange(callback: (users: UserPresence[]) => void) {
+    const handler = () => callback(this.getPresences());
+    this.awareness.on('change', handler);
+    this.awareness.on('update', handler);
+  }
+
+  getPresences(): UserPresence[] {
+    const users: UserPresence[] = [];
+    this.awareness.getStates().forEach((state) => {
+      if (state['presence']) {
+        users.push(state['presence'] as UserPresence);
+      }
+    });
+    return users;
   }
 
   addStroke(stroke: Stroke) {

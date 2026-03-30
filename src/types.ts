@@ -45,3 +45,9 @@ export interface CursorPresence {
   y: number;
   name: string;
 }
+
+export interface UserPresence {
+  userId: string;
+  color: string;
+  name: string;
+}

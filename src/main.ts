@@ -4,6 +4,7 @@ import { SyncManager } from './collab/sync';
 import { PinManager } from './annotations/pins';
 import { CursorManager } from './collab/cursors';
 import { DrawManager } from './annotations/draw';
+import { PresenceSidebar } from './collab/presence-sidebar';
 import { parseRoute, generateRoomId, navigateToRoom } from './router';
 
 function showLobby() {
@@ -55,11 +56,13 @@ async function startViewer(roomId: string) {
   const pins = new PinManager(canvas, sync);
   const cursors = new CursorManager(canvas, sync);
   const draw = new DrawManager(canvas, sync);
+  const presence = new PresenceSidebar(sync);
 
   // Suppress unused variable warnings — managers attach event listeners
   void pins;
   void cursors;
   void draw;
+  void presence;
 
   const gpuAvailable = await renderer.init();
   if (!gpuAvailable) {

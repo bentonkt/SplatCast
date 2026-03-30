@@ -94,6 +94,19 @@ function setupWSConnection(ws: WebSocket, req: IncomingMessage) {
 
   ws.binaryType = 'arraybuffer';
 
+  // Track awareness client IDs owned by this connection
+  const awarenessChangeHandler = ({ added, updated }: { added: number[]; updated: number[]; removed: number[] }, origin: unknown) => {
+    if (origin === ws) {
+      const controlledIds = conns.get(ws);
+      if (controlledIds) {
+        for (const id of added.concat(updated)) {
+          controlledIds.add(id);
+        }
+      }
+    }
+  };
+  awareness.on('update', awarenessChangeHandler);
+
   // Send sync step 1
   {
     const encoder = encoding.createEncoder();
@@ -135,6 +148,7 @@ function setupWSConnection(ws: WebSocket, req: IncomingMessage) {
   });
 
   ws.on('close', () => {
+    awareness.off('update', awarenessChangeHandler);
     const controlledIds = conns.get(ws);
     conns.delete(ws);
     awarenessProtocol.removeAwarenessStates(awareness, Array.from(controlledIds ?? []), null);

@@ -1,9 +1,9 @@
 # SplatCast Backlog
 
 ## In Progress
+- [ ] Cross-section 2D export — define arbitrary slice planes and export the resulting cross-section as a dimensioned 2D SVG for architects and engineers
 
 ## Up Next
-- [ ] Cross-section 2D export — define arbitrary slice planes and export the resulting cross-section as a dimensioned 2D SVG for architects and engineers
 - [ ] AI-assisted defect detection — run anomaly detection over splat density/color to automatically flag regions deviating from a reference model
 
 ## Discovered

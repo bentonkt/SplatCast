@@ -1,9 +1,9 @@
 # SplatCast Backlog
 
 ## In Progress
+- [ ] Annotation labels — click a pin to add/edit a text label
 
 ## Up Next
-- [ ] Annotation labels — click a pin to add/edit a text label
 - [ ] User presence sidebar — show connected users with their colors
 - [ ] Undo/redo — Yjs undo manager for annotation changes
 

@@ -1,6 +1,6 @@
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
-import { Annotation, CursorPresence } from '../types';
+import { Annotation, CursorPresence, Stroke } from '../types';
 import { Awareness } from 'y-protocols/awareness';
 
 export class SyncManager {
@@ -8,12 +8,14 @@ export class SyncManager {
   provider: WebsocketProvider;
   annotations: Y.Array<Annotation>;
   awareness: Awareness;
+  strokes: Y.Array<Stroke>;
 
   constructor(roomId: string, serverUrl = 'ws://localhost:4000') {
     this.doc = new Y.Doc();
     this.provider = new WebsocketProvider(serverUrl, roomId, this.doc);
     this.annotations = this.doc.getArray<Annotation>('annotations');
     this.awareness = this.provider.awareness;
+    this.strokes = this.doc.getArray<Stroke>('strokes');
   }
 
   addAnnotation(annotation: Annotation) {
@@ -49,6 +51,20 @@ export class SyncManager {
 
   getLocalClientId(): number {
     return this.awareness.clientID;
+  }
+
+  addStroke(stroke: Stroke) {
+    this.strokes.push([stroke]);
+  }
+
+  onStrokesChange(callback: (strokes: Stroke[]) => void) {
+    this.strokes.observe(() => {
+      callback(this.strokes.toArray());
+    });
+  }
+
+  getStrokes(): Stroke[] {
+    return this.strokes.toArray();
   }
 
   destroy() {

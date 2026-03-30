@@ -18,6 +18,19 @@ export interface Annotation {
   timestamp: number;
 }
 
+export interface StrokePoint {
+  x: number;
+  y: number;
+}
+
+export interface Stroke {
+  id: string;
+  points: StrokePoint[];
+  color: string;
+  userId: string;
+  timestamp: number;
+}
+
 export interface CameraState {
   position: [number, number, number];
   target: [number, number, number];

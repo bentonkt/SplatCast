@@ -23,8 +23,19 @@ function roomFilePath(roomName: string): string {
 function loadDocState(doc: Y.Doc, roomName: string): void {
   const filePath = roomFilePath(roomName);
   if (fs.existsSync(filePath)) {
-    const data = fs.readFileSync(filePath);
-    Y.applyUpdate(doc, new Uint8Array(data));
+    try {
+      const data = fs.readFileSync(filePath);
+      Y.applyUpdate(doc, new Uint8Array(data));
+    } catch (err) {
+      console.error(`Failed to load state for room "${roomName}", starting fresh:`, err);
+      const corruptPath = filePath + '.corrupt';
+      try {
+        fs.renameSync(filePath, corruptPath);
+        console.error(`Moved corrupted file to ${corruptPath}`);
+      } catch {
+        // If we can't move it, just continue with a fresh doc
+      }
+    }
   }
 }
 

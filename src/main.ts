@@ -69,11 +69,27 @@ async function startViewer(roomId: string) {
   const bookmarkPanel = new BookmarkPanel(sync, camera);
   const tourPanel = new TourPanel(sync, camera);
 
+  // Follow mode: apply remote camera when following
+  let followingUserId: string | null = null;
+
+  presence.setFollowChangeHandler((userId) => {
+    followingUserId = userId;
+  });
+
+  // Unfollow on local camera interaction
+  const unfollowOnInteraction = () => {
+    if (followingUserId) {
+      presence.unfollow();
+    }
+  };
+  canvas.addEventListener('mousedown', unfollowOnInteraction);
+  canvas.addEventListener('wheel', unfollowOnInteraction);
+  canvas.addEventListener('touchstart', unfollowOnInteraction);
+
   // Suppress unused variable warnings — managers attach event listeners
   void pins;
   void cursors;
   void draw;
-  void presence;
   void undoRedo;
   void bookmarkPanel;
   void tourPanel;
@@ -131,11 +147,28 @@ async function startViewer(roomId: string) {
   }
 
   let animating = false;
+  let lastBroadcastTime = 0;
   function startRenderLoop() {
     if (animating) return;
     animating = true;
     function frame() {
+      // Apply followed user's camera
+      if (followingUserId) {
+        const remoteCam = sync.getCameraForUser(followingUserId);
+        if (remoteCam) {
+          camera.setOrbitalState(remoteCam);
+        }
+      }
+
       renderer.render();
+
+      // Broadcast local camera state at ~10fps
+      const now = performance.now();
+      if (now - lastBroadcastTime > 100) {
+        lastBroadcastTime = now;
+        sync.setLocalCamera(camera.getOrbitalState());
+      }
+
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);

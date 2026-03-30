@@ -85,3 +85,10 @@ export interface TourState {
   bookmarkIds: string[];
   startedBy: string;
 }
+
+export interface OrbitalState {
+  theta: number;
+  phi: number;
+  radius: number;
+  target: [number, number, number];
+}

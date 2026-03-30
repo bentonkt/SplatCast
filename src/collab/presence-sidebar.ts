@@ -9,6 +9,9 @@ export class PresenceSidebar {
   readonly userId: string;
   private color: string;
   private name: string;
+  private followingUserId: string | null = null;
+  private followBanner: HTMLDivElement | null = null;
+  private onFollowChange: ((userId: string | null) => void) | null = null;
 
   constructor(private sync: SyncManager) {
     this.userId = crypto.randomUUID().slice(0, 8);
@@ -73,6 +76,72 @@ export class PresenceSidebar {
     this.renderUsers(this.sync.getPresences());
   }
 
+  setFollowChangeHandler(handler: (userId: string | null) => void) {
+    this.onFollowChange = handler;
+  }
+
+  followUser(userId: string) {
+    this.followingUserId = userId;
+    this.renderUsers(this.sync.getPresences());
+    this.showFollowBanner(userId);
+    this.onFollowChange?.(userId);
+  }
+
+  unfollow() {
+    if (!this.followingUserId) return;
+    this.followingUserId = null;
+    this.renderUsers(this.sync.getPresences());
+    this.hideFollowBanner();
+    this.onFollowChange?.(null);
+  }
+
+  getFollowingUserId(): string | null {
+    return this.followingUserId;
+  }
+
+  private showFollowBanner(userId: string) {
+    this.hideFollowBanner();
+    const users = this.sync.getPresences();
+    const user = users.find((u) => u.userId === userId);
+    const name = user ? user.name : userId;
+
+    const banner = document.createElement('div');
+    banner.id = 'follow-banner';
+    banner.style.cssText = `
+      position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:200;
+      background:rgba(78,205,196,0.9);color:#1a1a2e;
+      padding:8px 16px;border-radius:8px;
+      font:13px/1.4 system-ui,sans-serif;font-weight:bold;
+      display:flex;align-items:center;gap:10px;
+      box-shadow:0 2px 8px rgba(0,0,0,0.3);
+    `;
+
+    const text = document.createElement('span');
+    text.textContent = `Following ${name}`;
+    banner.appendChild(text);
+
+    const unfollowBtn = document.createElement('button');
+    unfollowBtn.id = 'unfollow-btn';
+    unfollowBtn.textContent = 'Unfollow';
+    unfollowBtn.style.cssText = `
+      padding:3px 10px;border:1px solid #1a1a2e;border-radius:4px;
+      background:rgba(26,26,46,0.2);color:#1a1a2e;cursor:pointer;
+      font:12px system-ui,sans-serif;font-weight:bold;
+    `;
+    unfollowBtn.addEventListener('click', () => this.unfollow());
+    banner.appendChild(unfollowBtn);
+
+    document.body.appendChild(banner);
+    this.followBanner = banner;
+  }
+
+  private hideFollowBanner() {
+    if (this.followBanner) {
+      this.followBanner.remove();
+      this.followBanner = null;
+    }
+  }
+
   private renderUsers(users: UserPresence[]) {
     this.countBadge.textContent = String(users.length);
     this.userList.innerHTML = '';
@@ -82,9 +151,11 @@ export class PresenceSidebar {
       row.className = 'presence-user';
       row.dataset.userId = user.userId;
       const isLocal = user.userId === this.userId;
+      const isFollowing = user.userId === this.followingUserId;
       row.style.cssText = `
         padding:4px 12px;display:flex;align-items:center;gap:8px;
         ${isLocal ? 'font-weight:bold;' : ''}
+        ${isFollowing ? 'background:rgba(78,205,196,0.15);' : ''}
       `;
 
       const dot = document.createElement('span');
@@ -98,14 +169,36 @@ export class PresenceSidebar {
       const nameEl = document.createElement('span');
       nameEl.className = 'presence-name';
       nameEl.textContent = isLocal ? `${user.name} (you)` : user.name;
-      nameEl.style.cssText = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+      nameEl.style.cssText = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;';
       row.appendChild(nameEl);
+
+      if (!isLocal) {
+        const followBtn = document.createElement('button');
+        followBtn.className = 'follow-btn';
+        followBtn.dataset.userId = user.userId;
+        followBtn.textContent = isFollowing ? 'Unfollow' : 'Follow';
+        followBtn.style.cssText = `
+          padding:1px 6px;border:1px solid rgba(78,205,196,0.5);border-radius:3px;
+          background:${isFollowing ? 'rgba(78,205,196,0.3)' : 'transparent'};
+          color:#4ecdc4;cursor:pointer;font:10px system-ui,sans-serif;flex-shrink:0;
+        `;
+        followBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (isFollowing) {
+            this.unfollow();
+          } else {
+            this.followUser(user.userId);
+          }
+        });
+        row.appendChild(followBtn);
+      }
 
       this.userList.appendChild(row);
     }
   }
 
   destroy() {
+    this.hideFollowBanner();
     this.sidebar.remove();
   }
 }

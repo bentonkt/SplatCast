@@ -1,9 +1,9 @@
 # SplatCast Backlog
 
 ## In Progress
+- [ ] Splat file format support — support .ply files in addition to .splat format
 
 ## Up Next
-- [ ] Splat file format support — support .ply files in addition to .splat format
 - [ ] Loading UI — progress bar for large splat files, drag-and-drop file loading
 - [ ] Annotation labels — click a pin to add/edit a text label
 - [ ] User presence sidebar — show connected users with their colors

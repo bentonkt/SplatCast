@@ -148,6 +148,7 @@ async function startViewer(roomId: string) {
 
   let animating = false;
   let lastBroadcastTime = 0;
+  let lastBroadcastState: { theta: number; phi: number; radius: number; target: [number, number, number] } | null = null;
   function startRenderLoop() {
     if (animating) return;
     animating = true;
@@ -162,11 +163,22 @@ async function startViewer(roomId: string) {
 
       renderer.render();
 
-      // Broadcast local camera state at ~10fps
+      // Broadcast local camera state at ~10fps, only when changed
       const now = performance.now();
       if (now - lastBroadcastTime > 100) {
-        lastBroadcastTime = now;
-        sync.setLocalCamera(camera.getOrbitalState());
+        const currentState = camera.getOrbitalState();
+        const changed = !lastBroadcastState
+          || currentState.theta !== lastBroadcastState.theta
+          || currentState.phi !== lastBroadcastState.phi
+          || currentState.radius !== lastBroadcastState.radius
+          || currentState.target[0] !== lastBroadcastState.target[0]
+          || currentState.target[1] !== lastBroadcastState.target[1]
+          || currentState.target[2] !== lastBroadcastState.target[2];
+        if (changed) {
+          lastBroadcastTime = now;
+          lastBroadcastState = currentState;
+          sync.setLocalCamera(currentState);
+        }
       }
 
       requestAnimationFrame(frame);

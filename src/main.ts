@@ -8,6 +8,7 @@ import { PresenceSidebar } from './collab/presence-sidebar';
 import { UndoRedoToolbar } from './collab/undo-redo';
 import { BookmarkPanel } from './collab/bookmarks';
 import { ClipPlanesPanel } from './collab/clip-planes';
+import { TourPanel } from './collab/tour';
 import { parseRoute, generateRoomId, navigateToRoom } from './router';
 
 function showLobby() {
@@ -63,6 +64,7 @@ async function startViewer(roomId: string) {
   const presence = new PresenceSidebar(sync);
   const undoRedo = new UndoRedoToolbar(sync);
   const bookmarkPanel = new BookmarkPanel(sync, camera);
+  const tourPanel = new TourPanel(sync, camera);
 
   // Suppress unused variable warnings — managers attach event listeners
   void pins;
@@ -71,6 +73,7 @@ async function startViewer(roomId: string) {
   void presence;
   void undoRedo;
   void bookmarkPanel;
+  void tourPanel;
 
   const gpuAvailable = await renderer.init();
   if (!gpuAvailable) {

@@ -78,3 +78,10 @@ export interface Bookmark {
   color: string;
   timestamp: number;
 }
+
+export interface TourState {
+  playing: boolean;
+  currentIndex: number;
+  bookmarkIds: string[];
+  startedBy: string;
+}

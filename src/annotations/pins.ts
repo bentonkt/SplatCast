@@ -16,6 +16,7 @@ export class PinManager {
   private lastTapX = 0;
   private lastTapY = 0;
   private multiTouchActive = false;
+  private openThreadPinId: string | null = null;
 
   constructor(
     private canvas: HTMLCanvasElement,
@@ -255,7 +256,9 @@ export class PinManager {
 
   private renderPins() {
     this.overlay.innerHTML = '';
-    for (const pin of this.pins) {
+    // Only render top-level annotations (not replies)
+    const topLevel = this.pins.filter((p) => !p.parentId);
+    for (const pin of topLevel) {
       const annotationType = pin.type ?? 'pin';
       if (annotationType === 'pin') {
         this.renderPin(pin);
@@ -266,6 +269,11 @@ export class PinManager {
       } else if (annotationType === 'measurement') {
         this.renderMeasurement(pin);
       }
+    }
+
+    // Refresh thread panel replies if open
+    if (this.openThreadPinId) {
+      this.refreshThreadReplies(this.openThreadPinId);
     }
   }
 
@@ -309,71 +317,230 @@ export class PinManager {
       container.appendChild(label);
     }
 
-    container.title = `${pin.userId} — ${new Date(pin.timestamp).toLocaleTimeString()}${pin.label ? '\n' + pin.label : ''}\nClick to edit label`;
+    // Reply count badge
+    const replies = this.sync.getReplies(pin.id);
+    if (replies.length > 0) {
+      const badge = document.createElement('div');
+      badge.className = 'thread-badge';
+      badge.dataset.threadBadge = 'true';
+      badge.textContent = String(replies.length);
+      badge.style.cssText = `
+        position:absolute;top:-6px;right:-10px;
+        min-width:16px;height:16px;border-radius:8px;
+        background:#4ecdc4;color:#000;
+        font:bold 10px/16px system-ui,sans-serif;
+        text-align:center;padding:0 3px;
+        pointer-events:none;
+      `;
+      container.appendChild(badge);
+    }
 
-    // Click to edit label
+    container.title = `${pin.userId} — ${new Date(pin.timestamp).toLocaleTimeString()}${pin.label ? '\n' + pin.label : ''}\nClick to open thread`;
+
+    // Click to open thread panel
     container.addEventListener('click', (e) => {
       e.stopPropagation();
-      this.editPinLabel(pin);
+      this.openThreadPanel(pin);
     });
 
     this.overlay.appendChild(container);
   }
 
-  private editPinLabel(pin: Annotation) {
-    // Remove any existing label editor
-    const existing = document.getElementById('pin-label-editor');
-    if (existing) existing.remove();
+  private openThreadPanel(pin: Annotation) {
+    // Remove any existing thread panel or label editor
+    const existingPanel = document.getElementById('thread-panel');
+    if (existingPanel) existingPanel.remove();
+    const existingEditor = document.getElementById('pin-label-editor');
+    if (existingEditor) existingEditor.remove();
 
     const { x, y } = this.ndcToScreen(pin.position);
 
-    const editor = document.createElement('div');
-    editor.id = 'pin-label-editor';
-    editor.style.cssText = `
-      position:absolute;left:${x + 12}px;top:${y - 4}px;
+    const panel = document.createElement('div');
+    panel.id = 'thread-panel';
+    panel.dataset.parentId = pin.id;
+    panel.style.cssText = `
+      position:absolute;left:${x + 20}px;top:${y - 4}px;
       z-index:200;pointer-events:auto;
-      display:flex;gap:4px;align-items:center;
+      width:240px;max-height:300px;
+      background:rgba(30,30,50,0.95);
+      border:2px solid ${pin.color};border-radius:8px;
+      display:flex;flex-direction:column;
+      font:13px system-ui,sans-serif;color:#fff;
+      box-shadow:0 4px 12px rgba(0,0,0,0.5);
     `;
 
-    const input = document.createElement('input');
-    input.id = 'pin-label-input';
-    input.type = 'text';
-    input.value = pin.label;
-    input.placeholder = 'Add label…';
-    input.style.cssText = `
-      width:160px;padding:4px 8px;border-radius:4px;
-      border:2px solid ${pin.color};
-      background:rgba(30,30,50,0.95);color:#fff;
+    // Create reply input early so label Enter can focus it
+    const replyInput = document.createElement('input');
+    replyInput.id = 'thread-reply-input';
+    replyInput.type = 'text';
+    replyInput.placeholder = 'Reply…';
+    replyInput.style.cssText = `
+      width:100%;padding:4px 6px;border-radius:4px;box-sizing:border-box;
+      border:1px solid rgba(255,255,255,0.2);
+      background:rgba(255,255,255,0.1);color:#fff;
       font:13px system-ui,sans-serif;outline:none;
     `;
 
-    let cancelled = false;
+    // Header with label editor
+    const header = document.createElement('div');
+    header.style.cssText = 'padding:8px;border-bottom:1px solid rgba(255,255,255,0.15);';
 
-    const save = () => {
-      if (cancelled) return;
-      const newLabel = input.value.trim();
+    const labelInput = document.createElement('input');
+    labelInput.id = 'pin-label-input';
+    labelInput.type = 'text';
+    labelInput.value = pin.label;
+    labelInput.placeholder = 'Add label…';
+    labelInput.style.cssText = `
+      width:100%;padding:4px 6px;border-radius:4px;box-sizing:border-box;
+      border:1px solid rgba(255,255,255,0.2);
+      background:rgba(255,255,255,0.1);color:#fff;
+      font:13px system-ui,sans-serif;outline:none;
+    `;
+
+    let labelCancelled = false;
+
+    // Forward-declare closeOnOutside so closePanel can reference it
+    let closeOnOutside: ((e: MouseEvent) => void) | null = null;
+
+    const saveLabel = () => {
+      if (labelCancelled) return;
+      const newLabel = labelInput.value.trim();
       this.sync.updateAnnotation(pin.id, { label: newLabel });
-      editor.remove();
     };
 
-    input.addEventListener('keydown', (e) => {
+    const closePanel = (save = true) => {
+      if (save) saveLabel();
+      this.openThreadPinId = null;
+      panel.remove();
+      if (closeOnOutside) {
+        document.removeEventListener('mousedown', closeOnOutside);
+        closeOnOutside = null;
+      }
+    };
+
+    labelInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
-        save();
+        saveLabel();
+        replyInput.focus();
       } else if (e.key === 'Escape') {
-        cancelled = true;
-        editor.remove();
+        labelCancelled = true;
+        closePanel(false);
       }
       e.stopPropagation();
     });
 
-    input.addEventListener('blur', () => {
-      save();
+    labelInput.addEventListener('blur', () => {
+      saveLabel();
     });
 
-    editor.appendChild(input);
-    this.overlay.appendChild(editor);
-    input.focus();
-    input.select();
+    header.appendChild(labelInput);
+    panel.appendChild(header);
+
+    // Replies container
+    const repliesContainer = document.createElement('div');
+    repliesContainer.className = 'thread-replies';
+    repliesContainer.style.cssText = `
+      flex:1;overflow-y:auto;padding:4px 8px;
+      max-height:160px;
+    `;
+
+    const replies = this.sync.getReplies(pin.id);
+    for (const reply of replies) {
+      const replyEl = document.createElement('div');
+      replyEl.className = 'thread-reply';
+      replyEl.dataset.replyId = reply.id;
+      replyEl.style.cssText = `
+        padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.08);
+        display:flex;flex-direction:column;gap:2px;
+      `;
+
+      const replyHeader = document.createElement('span');
+      replyHeader.style.cssText = `font-size:10px;color:${reply.color};`;
+      replyHeader.textContent = `${reply.userId} \u00b7 ${new Date(reply.timestamp).toLocaleTimeString()}`;
+
+      const replyText = document.createElement('span');
+      replyText.style.cssText = 'font-size:12px;word-break:break-word;';
+      replyText.textContent = reply.label;
+
+      replyEl.appendChild(replyHeader);
+      replyEl.appendChild(replyText);
+      repliesContainer.appendChild(replyEl);
+    }
+    panel.appendChild(repliesContainer);
+
+    // Reply input area
+    const replyArea = document.createElement('div');
+    replyArea.style.cssText = 'padding:8px;border-top:1px solid rgba(255,255,255,0.15);';
+
+    replyInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const text = replyInput.value.trim();
+        if (text) {
+          this.sync.addAnnotation({
+            id: crypto.randomUUID(),
+            type: 'pin',
+            position: pin.position,
+            label: text,
+            color: getUserColor(this.userId),
+            userId: this.userId,
+            timestamp: Date.now(),
+            parentId: pin.id,
+          });
+          replyInput.value = '';
+        }
+      } else if (e.key === 'Escape') {
+        closePanel();
+      }
+      e.stopPropagation();
+    });
+
+    replyArea.appendChild(replyInput);
+    panel.appendChild(replyArea);
+
+    // Close panel when clicking outside
+    closeOnOutside = (e: MouseEvent) => {
+      if (!panel.contains(e.target as Node)) {
+        closePanel();
+      }
+    };
+    setTimeout(() => document.addEventListener('mousedown', closeOnOutside), 0);
+
+    this.openThreadPinId = pin.id;
+    document.body.appendChild(panel);
+    labelInput.focus();
+    labelInput.select();
+  }
+
+  private refreshThreadReplies(parentId: string) {
+    const panel = document.getElementById('thread-panel');
+    if (!panel) return;
+
+    const repliesContainer = panel.querySelector('.thread-replies');
+    if (!repliesContainer) return;
+
+    repliesContainer.innerHTML = '';
+    const replies = this.sync.getReplies(parentId);
+    for (const reply of replies) {
+      const replyEl = document.createElement('div');
+      replyEl.className = 'thread-reply';
+      replyEl.dataset.replyId = reply.id;
+      replyEl.style.cssText = `
+        padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.08);
+        display:flex;flex-direction:column;gap:2px;
+      `;
+
+      const replyHeader = document.createElement('span');
+      replyHeader.style.cssText = `font-size:10px;color:${reply.color};`;
+      replyHeader.textContent = `${reply.userId} \u00b7 ${new Date(reply.timestamp).toLocaleTimeString()}`;
+
+      const replyText = document.createElement('span');
+      replyText.style.cssText = 'font-size:12px;word-break:break-word;';
+      replyText.textContent = reply.label;
+
+      replyEl.appendChild(replyHeader);
+      replyEl.appendChild(replyText);
+      repliesContainer.appendChild(replyEl);
+    }
   }
 
   private renderArrow(pin: Annotation) {
@@ -504,6 +671,8 @@ export class PinManager {
     this.canvas.removeEventListener('touchstart', this.onTouchStart);
     this.canvas.removeEventListener('touchend', this.onTouchEnd);
     document.removeEventListener('keydown', this.onKeyDown);
+    const threadPanel = document.getElementById('thread-panel');
+    if (threadPanel) threadPanel.remove();
     this.overlay.remove();
     this.toolbar.remove();
     this.colorIndicator.remove();

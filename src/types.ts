@@ -16,6 +16,7 @@ export interface Annotation {
   color: string;
   userId: string;
   timestamp: number;
+  parentId?: string;
 }
 
 export interface StrokePoint {

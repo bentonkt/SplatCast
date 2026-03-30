@@ -3,6 +3,7 @@ import { SyncManager } from '../collab/sync';
 import { getUserColor, createColorIndicator } from '../collab/user-colors';
 import { captureScreenshot } from '../screenshot';
 import { exportJSON, exportCSV } from '../export';
+import { exportBCF } from '../bcf-export';
 import { RoleManager } from '../collab/roles';
 
 export class PinManager {
@@ -147,6 +148,23 @@ export class PinManager {
       exportCSV(this.sync);
     });
     toolbar.appendChild(csvBtn);
+
+    // Export BCF button
+    const bcfBtn = document.createElement('button');
+    bcfBtn.className = 'toolbar-btn';
+    bcfBtn.id = 'export-bcf-btn';
+    bcfBtn.textContent = 'BCF';
+    bcfBtn.title = 'Export as BCF (.bcfzip) for BIM tools';
+    bcfBtn.style.cssText = `
+      width:36px;height:36px;border:2px solid transparent;border-radius:6px;
+      background:rgba(255,255,255,0.1);cursor:pointer;font-size:11px;
+      display:flex;align-items:center;justify-content:center;
+      color:white;pointer-events:auto;font-family:monospace;font-weight:bold;
+    `;
+    bcfBtn.addEventListener('click', () => {
+      exportBCF(this.sync, this.canvas);
+    });
+    toolbar.appendChild(bcfBtn);
 
     // Separator before resolve filter
     const sep2 = document.createElement('div');

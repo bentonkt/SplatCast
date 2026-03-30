@@ -21,7 +21,7 @@ test('annotation toolbar renders with mode buttons and screenshot', async ({ pag
   const room = uniqueRoom('toolbar');
   await waitForAppReady(page, room);
   const buttons = page.locator('#annotation-toolbar .toolbar-btn');
-  await expect(buttons).toHaveCount(8);
+  await expect(buttons).toHaveCount(9);
 });
 
 test('clicking toolbar buttons switches annotation mode', async ({ page }) => {

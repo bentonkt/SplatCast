@@ -17,11 +17,11 @@ async function waitForAppReady(page: import('@playwright/test').Page, room?: str
   await page.waitForSelector('#pin-overlay', { timeout: 5000 });
 }
 
-test('annotation toolbar renders with three mode buttons', async ({ page }) => {
+test('annotation toolbar renders with mode buttons and screenshot', async ({ page }) => {
   const room = uniqueRoom('toolbar');
   await waitForAppReady(page, room);
   const buttons = page.locator('#annotation-toolbar .toolbar-btn');
-  await expect(buttons).toHaveCount(4);
+  await expect(buttons).toHaveCount(5);
 });
 
 test('clicking toolbar buttons switches annotation mode', async ({ page }) => {

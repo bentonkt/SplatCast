@@ -1,5 +1,5 @@
 import { OrbitCamera } from './renderer/camera';
-import { SplatRenderer, loadSplatScene, parseSplatBuffer, parsePlyBuffer } from './renderer/splat-renderer';
+import { SplatRenderer, loadSplatScene, parseSplatBuffer, parsePlyBuffer, computeBounds } from './renderer/splat-renderer';
 import { SyncManager } from './collab/sync';
 import { PinManager } from './annotations/pins';
 import { CursorManager } from './collab/cursors';
@@ -108,6 +108,8 @@ async function startViewer(roomId: string) {
   try {
     const splatData = await loadSplatScene('/sample.splat', updateProgress);
     renderer.loadSplats(splatData);
+    const bounds = computeBounds(splatData);
+    camera.frameBounds(bounds.center, bounds.extent);
   } finally {
     hideLoading();
   }
@@ -170,6 +172,8 @@ async function startViewer(roomId: string) {
         : parseSplatBuffer(buffer);
 
       renderer.loadSplats(data);
+      const droppedBounds = computeBounds(data);
+      camera.frameBounds(droppedBounds.center, droppedBounds.extent);
     } finally {
       hideLoading();
     }

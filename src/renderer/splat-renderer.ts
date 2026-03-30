@@ -1,4 +1,4 @@
-import { SplatData } from '../types';
+import { SplatData, SceneBounds } from '../types';
 import { OrbitCamera } from './camera';
 
 const WGSL_SHADER = /* wgsl */`
@@ -178,11 +178,11 @@ export class SplatRenderer {
       buf[base + 4] = data.colors[i * 4 + 1];
       buf[base + 5] = data.colors[i * 4 + 2];
       buf[base + 6] = data.colors[i * 4 + 3];
-      // size (derive from covariance scale, or default 0.05)
-      const cx = data.covariances[i * 6 + 0];
-      const cy = data.covariances[i * 6 + 3];
-      const cz = data.covariances[i * 6 + 5];
-      buf[base + 7] = Math.sqrt((cx + cy + cz) / 3) || 0.05;
+      // size from covariance trace (c00 + c11 + c22)
+      const c00 = data.covariances[i * 6 + 0];
+      const c11 = data.covariances[i * 6 + 3];
+      const c22 = data.covariances[i * 6 + 5];
+      buf[base + 7] = Math.sqrt((c00 + c11 + c22) / 3) || 0.05;
     }
 
     if (this.vertexBuffer) this.vertexBuffer.destroy();
@@ -292,12 +292,45 @@ export class SplatRenderer {
 }
 
 /**
- * Load a .splat binary file (32 bytes per splat):
- *   position: 3x f32 (12 bytes)
- *   scale:    3x f32 (12 bytes)
- *   color:    4x u8  (4 bytes)
- *   rotation: 4x u8  (4 bytes)
+ * Compute the upper-triangle of the 3×3 covariance matrix Σ = R·S²·Rᵀ
+ * from a quaternion (w,x,y,z) and per-axis scales.
+ * Writes 6 floats (c00, c01, c02, c11, c12, c22) into `out` at `outOffset`.
  */
+function quatScaleToCov(
+  qw: number, qx: number, qy: number, qz: number,
+  sx: number, sy: number, sz: number,
+  out: Float32Array, outOffset: number
+): void {
+  // Normalize quaternion
+  const len = Math.sqrt(qw * qw + qx * qx + qy * qy + qz * qz) || 1;
+  const w = qw / len, x = qx / len, y = qy / len, z = qz / len;
+
+  // Rotation matrix columns (R)
+  const r00 = 1 - 2 * (y * y + z * z);
+  const r10 = 2 * (x * y + w * z);
+  const r20 = 2 * (x * z - w * y);
+  const r01 = 2 * (x * y - w * z);
+  const r11 = 1 - 2 * (x * x + z * z);
+  const r21 = 2 * (y * z + w * x);
+  const r02 = 2 * (x * z + w * y);
+  const r12 = 2 * (y * z - w * x);
+  const r22 = 1 - 2 * (x * x + y * y);
+
+  // M = R · diag(sx², sy², sz²) — columns of R scaled by variance
+  const sx2 = sx * sx, sy2 = sy * sy, sz2 = sz * sz;
+  const m00 = r00 * sx2, m10 = r10 * sx2, m20 = r20 * sx2;
+  const m01 = r01 * sy2, m11 = r11 * sy2, m21 = r21 * sy2;
+  const m02 = r02 * sz2, m12 = r12 * sz2, m22 = r22 * sz2;
+
+  // Σ = M · Rᵀ  (upper triangle only: c00,c01,c02,c11,c12,c22)
+  out[outOffset + 0] = m00 * r00 + m01 * r01 + m02 * r02; // c00
+  out[outOffset + 1] = m00 * r10 + m01 * r11 + m02 * r12; // c01
+  out[outOffset + 2] = m00 * r20 + m01 * r21 + m02 * r22; // c02
+  out[outOffset + 3] = m10 * r10 + m11 * r11 + m12 * r12; // c11
+  out[outOffset + 4] = m10 * r20 + m11 * r21 + m12 * r22; // c12
+  out[outOffset + 5] = m20 * r20 + m21 * r21 + m22 * r22; // c22
+}
+
 /** Fetch with progress callback (0-1). Falls back to normal fetch when streaming unsupported. */
 async function fetchWithProgress(
   url: string,
@@ -358,13 +391,10 @@ export async function loadSplatFile(
     positions[i * 3 + 1] = view.getFloat32(offset + 4,  true);
     positions[i * 3 + 2] = view.getFloat32(offset + 8,  true);
 
-    // Scale (3x f32) — use as diagonal covariance
+    // Scale (3x f32)
     const sx = view.getFloat32(offset + 12, true);
     const sy = view.getFloat32(offset + 16, true);
     const sz = view.getFloat32(offset + 20, true);
-    covariances[i * 6 + 0] = sx * sx;
-    covariances[i * 6 + 3] = sy * sy;
-    covariances[i * 6 + 5] = sz * sz;
 
     // Color (4x u8 normalized to 0-1)
     colors[i * 4 + 0] = view.getUint8(offset + 24) / 255;
@@ -372,7 +402,12 @@ export async function loadSplatFile(
     colors[i * 4 + 2] = view.getUint8(offset + 26) / 255;
     colors[i * 4 + 3] = view.getUint8(offset + 27) / 255;
 
-    // Bytes 28-31 are quaternion rotation (ignored for now)
+    // Rotation quaternion (4x u8: 0-255 → -1..1, wxyz order)
+    const qa = (view.getUint8(offset + 28) - 128) / 128;
+    const qb = (view.getUint8(offset + 29) - 128) / 128;
+    const qc = (view.getUint8(offset + 30) - 128) / 128;
+    const qd = (view.getUint8(offset + 31) - 128) / 128;
+    quatScaleToCov(qa, qb, qc, qd, sx, sy, sz, covariances, i * 6);
   }
 
   return { positions, colors, covariances, count };
@@ -525,9 +560,22 @@ export function parsePlyBuffer(buffer: ArrayBuffer): SplatData {
       sy = readPlyValue(dataView, base + syP.offset, syP.type);
       sz = readPlyValue(dataView, base + szP.offset, szP.type);
     }
-    covariances[i * 6 + 0] = sx * sx;
-    covariances[i * 6 + 3] = sy * sy;
-    covariances[i * 6 + 5] = sz * sz;
+    // Rotation quaternion → full covariance
+    const r0Prop = getProp('rot_0');
+    if (r0Prop) {
+      const r1Prop = getProp('rot_1')!;
+      const r2Prop = getProp('rot_2')!;
+      const r3Prop = getProp('rot_3')!;
+      const qw = readPlyValue(dataView, base + r0Prop.offset, r0Prop.type);
+      const qx = readPlyValue(dataView, base + r1Prop.offset, r1Prop.type);
+      const qy = readPlyValue(dataView, base + r2Prop.offset, r2Prop.type);
+      const qz = readPlyValue(dataView, base + r3Prop.offset, r3Prop.type);
+      quatScaleToCov(qw, qx, qy, qz, sx, sy, sz, covariances, i * 6);
+    } else {
+      covariances[i * 6 + 0] = sx * sx;
+      covariances[i * 6 + 3] = sy * sy;
+      covariances[i * 6 + 5] = sz * sz;
+    }
 
     // Color
     if (hasShColor) {
@@ -595,6 +643,22 @@ export async function loadSplatScene(
   return loadSplatFile(url, onProgress);
 }
 
+/** Compute the axis-aligned bounding box center and extent of a splat scene */
+export function computeBounds(data: SplatData): SceneBounds {
+  if (data.count === 0) return { center: [0, 0, 0], extent: 1 };
+  let minX = Infinity, minY = Infinity, minZ = Infinity;
+  let maxX = -Infinity, maxY = -Infinity, maxZ = -Infinity;
+  for (let i = 0; i < data.count; i++) {
+    const x = data.positions[i * 3], y = data.positions[i * 3 + 1], z = data.positions[i * 3 + 2];
+    if (x < minX) minX = x; if (x > maxX) maxX = x;
+    if (y < minY) minY = y; if (y > maxY) maxY = y;
+    if (z < minZ) minZ = z; if (z > maxZ) maxZ = z;
+  }
+  const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2, cz = (minZ + maxZ) / 2;
+  const dx = maxX - minX, dy = maxY - minY, dz = maxZ - minZ;
+  return { center: [cx, cy, cz], extent: Math.sqrt(dx * dx + dy * dy + dz * dz) / 2 };
+}
+
 /** Parse a .splat buffer loaded from a dropped file */
 export function parseSplatBuffer(buffer: ArrayBuffer): SplatData {
   const BYTES_PER_SPLAT = 32;
@@ -615,14 +679,17 @@ export function parseSplatBuffer(buffer: ArrayBuffer): SplatData {
     const sx = view.getFloat32(offset + 12, true);
     const sy = view.getFloat32(offset + 16, true);
     const sz = view.getFloat32(offset + 20, true);
-    covariances[i * 6 + 0] = sx * sx;
-    covariances[i * 6 + 3] = sy * sy;
-    covariances[i * 6 + 5] = sz * sz;
 
     colors[i * 4 + 0] = view.getUint8(offset + 24) / 255;
     colors[i * 4 + 1] = view.getUint8(offset + 25) / 255;
     colors[i * 4 + 2] = view.getUint8(offset + 26) / 255;
     colors[i * 4 + 3] = view.getUint8(offset + 27) / 255;
+
+    const qa = (view.getUint8(offset + 28) - 128) / 128;
+    const qb = (view.getUint8(offset + 29) - 128) / 128;
+    const qc = (view.getUint8(offset + 30) - 128) / 128;
+    const qd = (view.getUint8(offset + 31) - 128) / 128;
+    quatScaleToCov(qa, qb, qc, qd, sx, sy, sz, covariances, i * 6);
   }
 
   return { positions, colors, covariances, count };

@@ -3,8 +3,13 @@
 ## In Progress
 
 ## Up Next
+- [ ] Semantic region tagging — paint or lasso-select groups of splats and assign semantic labels (e.g. "structural column", "HVAC duct", "exterior wall") that persist across sessions, enabling filtered views by trade/discipline and searchable scene elements
 
 ## Discovered
+- [ ] 4D timeline scrubber — load multiple splat captures of the same site taken on different dates and scrub through them on a timeline slider to visualize construction progress, with automatic alignment and the ability to flag areas behind schedule
+- [ ] 2D drawing overlay registration — import 2D floor plans or elevation drawings (PDF/DXF) and pin-register them to the 3D splat scene so reviewers can cross-reference design intent against the as-built capture
+- [ ] RFI/submittal workflow integration — extend spatial tasks into formal Request for Information workflows with numbered sequences, required-response fields, due dates, and exportable logs matching Procore/BIM 360 formats
+- [ ] Multi-scene composite view — load and spatially register multiple separate splat files into a unified scene (e.g. combining scans from different trades or floors) with per-scene visibility toggles and spatial conflict detection
 
 ## Done
 - [x] BCF issue export — export spatial tasks and annotations as BCF-format files (.bcfzip) with viewpoint snapshots and camera positions for integration with BIM coordination platforms — PR https://github.com/bentonkt/SplatCast/pull/39

@@ -54,8 +54,8 @@ test('annotation pin color matches user color indicator', async ({ page }) => {
   await page.mouse.dblclick(box.x + box.width / 2, box.y + box.height / 2);
   await expect(page.locator(pinSelector)).toHaveCount(baseline + 1, { timeout: 5000 });
 
-  // Pin color should match the indicator color
-  const pinColor = await page.locator(pinSelector).last()
+  // Pin color should match the indicator color (background is on the .pin-dot child)
+  const pinColor = await page.locator(pinSelector).last().locator('.pin-dot')
     .evaluate((el) => el.style.background);
   expect(pinColor).toBe(indicatorColor);
 });
@@ -115,8 +115,8 @@ test('two users get color-coded pins that are visually distinct', async ({ brows
     // Should have at least two distinct user IDs
     expect(new Set(pinUserIds).size).toBeGreaterThanOrEqual(2);
 
-    // All pins should carry a color via background style
-    const pinColors = await page1.locator(pinSelector).evaluateAll(
+    // All pins should carry a color via background style (on .pin-dot child)
+    const pinColors = await page1.locator(`${pinSelector} .pin-dot`).evaluateAll(
       (els) => els.map((el) => (el as HTMLElement).style.background)
     );
     for (const c of pinColors) {

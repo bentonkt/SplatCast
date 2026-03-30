@@ -22,6 +22,21 @@ export class SyncManager {
     this.annotations.push([annotation]);
   }
 
+  updateAnnotation(id: string, updates: Partial<Pick<Annotation, 'label'>>) {
+    const arr = this.annotations;
+    for (let i = 0; i < arr.length; i++) {
+      const ann = arr.get(i);
+      if (ann.id === id) {
+        const updated: Annotation = { ...ann, ...updates };
+        this.doc.transact(() => {
+          arr.delete(i, 1);
+          arr.insert(i, [updated]);
+        });
+        return;
+      }
+    }
+  }
+
   onAnnotationsChange(callback: (annotations: Annotation[]) => void) {
     this.annotations.observe(() => {
       callback(this.annotations.toArray());

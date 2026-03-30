@@ -214,18 +214,109 @@ export class PinManager {
 
   private renderPin(pin: Annotation) {
     const { x, y } = this.ndcToScreen(pin.position);
-    const el = document.createElement('div');
-    el.dataset.annotationType = 'pin';
-    el.dataset.userId = pin.userId;
-    el.style.cssText = `
+
+    // Container for pin dot + label
+    const container = document.createElement('div');
+    container.dataset.annotationType = 'pin';
+    container.dataset.annotationId = pin.id;
+    container.dataset.userId = pin.userId;
+    container.style.cssText = `
       position:absolute;left:${x - 8}px;top:${y - 8}px;
+      pointer-events:auto;cursor:pointer;
+    `;
+
+    // Pin dot
+    const dot = document.createElement('div');
+    dot.className = 'pin-dot';
+    dot.style.cssText = `
       width:16px;height:16px;border-radius:50%;
       background:${pin.color};border:2px solid white;
-      pointer-events:auto;cursor:pointer;
       box-shadow:0 2px 4px rgba(0,0,0,0.5);
     `;
-    el.title = `${pin.userId} — ${new Date(pin.timestamp).toLocaleTimeString()}`;
-    this.overlay.appendChild(el);
+    container.appendChild(dot);
+
+    // Label (shown below pin if present)
+    if (pin.label) {
+      const label = document.createElement('div');
+      label.className = 'pin-label';
+      label.dataset.pinLabel = 'true';
+      label.textContent = pin.label;
+      label.style.cssText = `
+        position:absolute;top:20px;left:50%;transform:translateX(-50%);
+        padding:2px 6px;border-radius:3px;white-space:nowrap;
+        background:rgba(30,30,50,0.85);color:#fff;
+        font:12px/1.3 system-ui,sans-serif;
+        border:1px solid ${pin.color};
+        pointer-events:none;
+      `;
+      container.appendChild(label);
+    }
+
+    container.title = `${pin.userId} — ${new Date(pin.timestamp).toLocaleTimeString()}${pin.label ? '\n' + pin.label : ''}\nClick to edit label`;
+
+    // Click to edit label
+    container.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.editPinLabel(pin);
+    });
+
+    this.overlay.appendChild(container);
+  }
+
+  private editPinLabel(pin: Annotation) {
+    // Remove any existing label editor
+    const existing = document.getElementById('pin-label-editor');
+    if (existing) existing.remove();
+
+    const { x, y } = this.ndcToScreen(pin.position);
+
+    const editor = document.createElement('div');
+    editor.id = 'pin-label-editor';
+    editor.style.cssText = `
+      position:absolute;left:${x + 12}px;top:${y - 4}px;
+      z-index:200;pointer-events:auto;
+      display:flex;gap:4px;align-items:center;
+    `;
+
+    const input = document.createElement('input');
+    input.id = 'pin-label-input';
+    input.type = 'text';
+    input.value = pin.label;
+    input.placeholder = 'Add label…';
+    input.style.cssText = `
+      width:160px;padding:4px 8px;border-radius:4px;
+      border:2px solid ${pin.color};
+      background:rgba(30,30,50,0.95);color:#fff;
+      font:13px system-ui,sans-serif;outline:none;
+    `;
+
+    let cancelled = false;
+
+    const save = () => {
+      if (cancelled) return;
+      const newLabel = input.value.trim();
+      this.sync.updateAnnotation(pin.id, { label: newLabel });
+      editor.remove();
+    };
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        save();
+      } else if (e.key === 'Escape') {
+        cancelled = true;
+        editor.remove();
+      }
+      e.stopPropagation();
+    });
+
+    input.addEventListener('blur', () => {
+      save();
+    });
+
+    editor.appendChild(input);
+    this.overlay.appendChild(editor);
+    input.focus();
+    input.select();
   }
 
   private renderArrow(pin: Annotation) {

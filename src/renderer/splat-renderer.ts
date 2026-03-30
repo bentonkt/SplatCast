@@ -1,4 +1,4 @@
-import { SplatData, SceneBounds } from '../types';
+import { SplatData, SceneBounds, ClipPlanes } from '../types';
 import { OrbitCamera } from './camera';
 
 const WGSL_SHADER = /* wgsl */`
@@ -7,7 +7,13 @@ struct Uniforms {
   proj: mat4x4<f32>,
 };
 
+struct ClipUniforms {
+  clip_min: vec4<f32>,
+  clip_max: vec4<f32>,
+};
+
 @group(0) @binding(0) var<uniform> uniforms: Uniforms;
+@group(0) @binding(1) var<uniform> clip: ClipUniforms;
 
 struct VertexInput {
   @location(0) position: vec3<f32>,
@@ -18,6 +24,7 @@ struct VertexInput {
 struct VertexOutput {
   @builtin(position) clip_position: vec4<f32>,
   @location(0) color: vec4<f32>,
+  @location(1) world_pos: vec3<f32>,
   @builtin(point_size) point_size: f32,
 };
 
@@ -27,6 +34,7 @@ fn vs_main(in: VertexInput) -> VertexOutput {
   let view_pos = uniforms.view * vec4<f32>(in.position, 1.0);
   out.clip_position = uniforms.proj * view_pos;
   out.color = in.color;
+  out.world_pos = in.position;
   // Scale point size by distance (perspective)
   let dist = -view_pos.z;
   out.point_size = max(1.0, in.size * 200.0 / max(dist, 0.1));
@@ -35,6 +43,12 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
+  // Clip planes — discard splats outside the bounds
+  if (in.world_pos.x < clip.clip_min.x || in.world_pos.x > clip.clip_max.x ||
+      in.world_pos.y < clip.clip_min.y || in.world_pos.y > clip.clip_max.y ||
+      in.world_pos.z < clip.clip_min.z || in.world_pos.z > clip.clip_max.z) {
+    discard;
+  }
   // Premultiplied alpha output for correct blending
   return vec4<f32>(in.color.rgb * in.color.a, in.color.a);
 }
@@ -48,6 +62,7 @@ export class SplatRenderer {
   private context: GPUCanvasContext | null = null;
   private pipeline: GPURenderPipeline | null = null;
   private uniformBuffer: GPUBuffer | null = null;
+  private clipBuffer: GPUBuffer | null = null;
   private bindGroup: GPUBindGroup | null = null;
   private vertexBuffer: GPUBuffer | null = null;
   private indexBuffer: GPUBuffer | null = null;
@@ -56,6 +71,8 @@ export class SplatRenderer {
   private splatPositions: Float32Array | null = null;
   private sortedIndices: Uint32Array | null = null;
   private depthBuffer: Float32Array | null = null;
+  // Clip planes: [xMin, yMin, zMin, 0, xMax, yMax, zMax, 0]
+  private clipData = new Float32Array(8);
 
   constructor(private canvas: HTMLCanvasElement, private camera: OrbitCamera) {}
 
@@ -92,22 +109,44 @@ export class SplatRenderer {
       usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
     });
 
+    // Clip planes buffer: 2x vec4<f32> = 32 bytes (min xyz + pad, max xyz + pad)
+    this.clipBuffer = this.device.createBuffer({
+      size: 32,
+      usage: GPUBufferUsage.UNIFORM | GPUBufferUsage.COPY_DST,
+    });
+    // Default: very large bounds (no clipping)
+    this.clipData.set([-1e6, -1e6, -1e6, 0, 1e6, 1e6, 1e6, 0]);
+    this.device.queue.writeBuffer(this.clipBuffer, 0, this.clipData);
+
     const shaderModule = this.device.createShaderModule({ code: WGSL_SHADER });
 
     const bindGroupLayout = this.device.createBindGroupLayout({
-      entries: [{
-        binding: 0,
-        visibility: GPUShaderStage.VERTEX,
-        buffer: { type: 'uniform' },
-      }],
+      entries: [
+        {
+          binding: 0,
+          visibility: GPUShaderStage.VERTEX,
+          buffer: { type: 'uniform' },
+        },
+        {
+          binding: 1,
+          visibility: GPUShaderStage.VERTEX | GPUShaderStage.FRAGMENT,
+          buffer: { type: 'uniform' },
+        },
+      ],
     });
 
     this.bindGroup = this.device.createBindGroup({
       layout: bindGroupLayout,
-      entries: [{
-        binding: 0,
-        resource: { buffer: this.uniformBuffer },
-      }],
+      entries: [
+        {
+          binding: 0,
+          resource: { buffer: this.uniformBuffer },
+        },
+        {
+          binding: 1,
+          resource: { buffer: this.clipBuffer },
+        },
+      ],
     });
 
     this.pipeline = this.device.createRenderPipeline({
@@ -274,10 +313,24 @@ export class SplatRenderer {
     this.device.queue.submit([encoder.finish()]);
   }
 
+  setClipPlanes(planes: ClipPlanes) {
+    if (!this.device || !this.clipBuffer) return;
+    this.clipData[0] = planes.xMin;
+    this.clipData[1] = planes.yMin;
+    this.clipData[2] = planes.zMin;
+    this.clipData[3] = 0;
+    this.clipData[4] = planes.xMax;
+    this.clipData[5] = planes.yMax;
+    this.clipData[6] = planes.zMax;
+    this.clipData[7] = 0;
+    this.device.queue.writeBuffer(this.clipBuffer, 0, this.clipData);
+  }
+
   destroy() {
     this.vertexBuffer?.destroy();
     this.indexBuffer?.destroy();
     this.uniformBuffer?.destroy();
+    this.clipBuffer?.destroy();
     this.device?.destroy();
     this.device = null;
     this.context = null;
@@ -285,6 +338,7 @@ export class SplatRenderer {
     this.bindGroup = null;
     this.vertexBuffer = null;
     this.indexBuffer = null;
+    this.clipBuffer = null;
     this.splatPositions = null;
     this.sortedIndices = null;
     this.depthBuffer = null;

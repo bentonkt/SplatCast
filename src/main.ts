@@ -7,6 +7,7 @@ import { DrawManager } from './annotations/draw';
 import { PresenceSidebar } from './collab/presence-sidebar';
 import { UndoRedoToolbar } from './collab/undo-redo';
 import { BookmarkPanel } from './collab/bookmarks';
+import { ClipPlanesPanel } from './collab/clip-planes';
 import { parseRoute, generateRoomId, navigateToRoom } from './router';
 
 function showLobby() {
@@ -62,6 +63,7 @@ async function startViewer(roomId: string) {
   const presence = new PresenceSidebar(sync);
   const undoRedo = new UndoRedoToolbar(sync);
   const bookmarkPanel = new BookmarkPanel(sync, camera);
+  const clipPlanesPanel = new ClipPlanesPanel(sync, renderer);
 
   // Suppress unused variable warnings — managers attach event listeners
   void pins;
@@ -70,6 +72,7 @@ async function startViewer(roomId: string) {
   void presence;
   void undoRedo;
   void bookmarkPanel;
+  void clipPlanesPanel;
 
   const gpuAvailable = await renderer.init();
   if (!gpuAvailable) {
@@ -110,6 +113,7 @@ async function startViewer(roomId: string) {
     renderer.loadSplats(splatData);
     const bounds = computeBounds(splatData);
     camera.frameBounds(bounds.center, bounds.extent);
+    clipPlanesPanel.setRange(bounds.extent * 1.5);
   } finally {
     hideLoading();
   }
@@ -174,6 +178,7 @@ async function startViewer(roomId: string) {
       renderer.loadSplats(data);
       const droppedBounds = computeBounds(data);
       camera.frameBounds(droppedBounds.center, droppedBounds.extent);
+      clipPlanesPanel.setRange(droppedBounds.extent * 1.5);
     } finally {
       hideLoading();
     }

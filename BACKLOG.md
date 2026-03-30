@@ -14,6 +14,11 @@
 - [ ] Offline-first sync with conflict resolution — cache Yjs document state in IndexedDB so users can annotate while disconnected, with automatic merge and visual conflict markers when reconnecting to the collaboration server
 - [ ] Shareable public view links — generate read-only URLs with embedded camera position and active annotations that load without authentication, enabling stakeholders to review specific viewpoints without joining a live session
 - [ ] Splat scene LOD streaming — progressive level-of-detail loading that fetches coarse splats first for instant preview, then streams higher-detail regions based on camera proximity, reducing initial load time for large construction site captures
+- [ ] OpenUSD splat import/export — import and export Gaussian splat scenes using the OpenUSD v26.03 3DGS schema, enabling round-trip interoperability with Pixar/NVIDIA/Autodesk pipelines and preserving annotations as USD layer metadata
+- [ ] Embeddable standalone HTML export — export the current scene view with baked-in annotations and camera position as a single self-contained HTML file (like SuperSplat's HTML Viewer export), hostable on any static server for stakeholder review without SplatCast access
+- [ ] Geospatial coordinate anchoring — pin splat scenes to real-world WGS84/UTM coordinates using ground control points, enabling GIS integration, multi-site dashboards, and accurate distance/area measurements tied to surveyed positions
+- [ ] In-browser splat editing tools — crop, delete, transform, and merge splat regions directly in the viewer using lasso and box selection, with undo support and collaborative sync so teams can clean up scan artifacts without leaving SplatCast
+- [ ] Drone video direct-to-splat pipeline — upload raw drone footage or phone video and trigger server-side 3DGS training (via a configurable backend), with progress tracking and automatic scene loading on completion for rapid site capture-to-review workflows
 
 ## Done
 - [x] Semantic region tagging — paint or lasso-select groups of splats and assign semantic labels (e.g. "structural column", "HVAC duct", "exterior wall") that persist across sessions, enabling filtered views by trade/discipline and searchable scene elements — PR https://github.com/bentonkt/SplatCast/pull/40

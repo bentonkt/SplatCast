@@ -109,6 +109,13 @@ export interface Defect {
   description: string;
 }
 
+export interface DeviationResult {
+  deviations: number[];
+  maxDeviation: number;
+  tolerance: number;
+  count: number;
+}
+
 export type TaskPriority = 'low' | 'medium' | 'high';
 export type TaskStatus = 'open' | 'in-progress' | 'done';
 

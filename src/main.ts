@@ -19,6 +19,7 @@ import { SplatInspector } from './renderer/inspector';
 import { TimelinePanel } from './collab/timeline';
 import { CrossSectionExporter } from './collab/cross-section';
 import { DefectDetector } from './collab/defect-detection';
+import { DeviationColormapPanel } from './collab/deviation-colormap';
 import { parseRoute, generateRoomId, navigateToRoom } from './router';
 
 function showLobby() {
@@ -135,6 +136,9 @@ async function startViewer(roomId: string) {
 
   const defectDetector = new DefectDetector(sync, renderer);
   void defectDetector;
+
+  const deviationColormap = new DeviationColormapPanel(sync, renderer);
+  void deviationColormap;
 
   const lassoPanel = new LassoPanel(canvas, sync, renderer, camera);
   void lassoPanel;

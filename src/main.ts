@@ -1,5 +1,5 @@
 import { OrbitCamera } from './renderer/camera';
-import { SplatRenderer, loadSplatFile } from './renderer/splat-renderer';
+import { SplatRenderer, loadSplatScene } from './renderer/splat-renderer';
 import { SyncManager } from './collab/sync';
 import { PinManager } from './annotations/pins';
 import { CursorManager } from './collab/cursors';
@@ -72,7 +72,7 @@ async function startViewer(roomId: string) {
     return;
   }
 
-  const splatData = await loadSplatFile('/sample.splat');
+  const splatData = await loadSplatScene('/sample.splat');
   renderer.loadSplats(splatData);
 
   function frame() {

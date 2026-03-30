@@ -35,7 +35,8 @@ fn vs_main(in: VertexInput) -> VertexOutput {
 
 @fragment
 fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
-  return in.color;
+  // Premultiplied alpha output for correct blending
+  return vec4<f32>(in.color.rgb * in.color.a, in.color.a);
 }
 `;
 
@@ -49,7 +50,12 @@ export class SplatRenderer {
   private uniformBuffer: GPUBuffer | null = null;
   private bindGroup: GPUBindGroup | null = null;
   private vertexBuffer: GPUBuffer | null = null;
+  private indexBuffer: GPUBuffer | null = null;
   private vertexCount = 0;
+  // CPU-side copies for per-frame depth sorting
+  private splatPositions: Float32Array | null = null;
+  private sortedIndices: Uint32Array | null = null;
+  private depthBuffer: Float32Array | null = null;
 
   constructor(private canvas: HTMLCanvasElement, private camera: OrbitCamera) {}
 
@@ -123,7 +129,22 @@ export class SplatRenderer {
       fragment: {
         module: shaderModule,
         entryPoint: 'fs_main',
-        targets: [{ format }],
+        targets: [{
+          format,
+          blend: {
+            color: {
+              srcFactor: 'one',
+              dstFactor: 'one-minus-src-alpha',
+              operation: 'add',
+            },
+            alpha: {
+              srcFactor: 'one',
+              dstFactor: 'one-minus-src-alpha',
+              operation: 'add',
+            },
+          },
+          writeMask: GPUColorWrite.ALL,
+        }],
       },
       primitive: {
         topology: 'point-list',
@@ -138,13 +159,20 @@ export class SplatRenderer {
 
     const count = data.count;
     const buf = new Float32Array(count * 8); // 8 floats per vertex = 32 bytes
+    const positions = new Float32Array(count * 3);
 
     for (let i = 0; i < count; i++) {
       const base = i * 8;
       // position
-      buf[base + 0] = data.positions[i * 3 + 0];
-      buf[base + 1] = data.positions[i * 3 + 1];
-      buf[base + 2] = data.positions[i * 3 + 2];
+      const px = data.positions[i * 3 + 0];
+      const py = data.positions[i * 3 + 1];
+      const pz = data.positions[i * 3 + 2];
+      buf[base + 0] = px;
+      buf[base + 1] = py;
+      buf[base + 2] = pz;
+      positions[i * 3 + 0] = px;
+      positions[i * 3 + 1] = py;
+      positions[i * 3 + 2] = pz;
       // color
       buf[base + 3] = data.colors[i * 4 + 0];
       buf[base + 4] = data.colors[i * 4 + 1];
@@ -158,22 +186,69 @@ export class SplatRenderer {
     }
 
     if (this.vertexBuffer) this.vertexBuffer.destroy();
+    if (this.indexBuffer) this.indexBuffer.destroy();
 
     this.vertexBuffer = this.device.createBuffer({
       size: buf.byteLength,
       usage: GPUBufferUsage.VERTEX | GPUBufferUsage.COPY_DST,
     });
     this.device.queue.writeBuffer(this.vertexBuffer, 0, buf);
+
+    // Index buffer for depth-sorted draw order
+    const indices = new Uint32Array(count);
+    for (let i = 0; i < count; i++) indices[i] = i;
+    this.indexBuffer = this.device.createBuffer({
+      size: indices.byteLength,
+      usage: GPUBufferUsage.INDEX | GPUBufferUsage.COPY_DST,
+    });
+    this.device.queue.writeBuffer(this.indexBuffer, 0, indices);
+
+    this.splatPositions = positions;
+    this.sortedIndices = indices;
+    this.depthBuffer = new Float32Array(count);
     this.vertexCount = count;
+  }
+
+  /** Sort splat indices back-to-front by view-space depth */
+  private sortByDepth(viewMatrix: Float32Array) {
+    if (!this.splatPositions || !this.sortedIndices || !this.depthBuffer) return;
+
+    const positions = this.splatPositions;
+    const indices = this.sortedIndices;
+    const depths = this.depthBuffer;
+    const count = this.vertexCount;
+
+    // Extract view-space Z row from view matrix (row 2 in column-major)
+    const m2  = viewMatrix[2];
+    const m6  = viewMatrix[6];
+    const m10 = viewMatrix[10];
+    const m14 = viewMatrix[14];
+
+    // Compute view-space depth for each splat
+    for (let i = 0; i < count; i++) {
+      const px = positions[i * 3];
+      const py = positions[i * 3 + 1];
+      const pz = positions[i * 3 + 2];
+      depths[i] = m2 * px + m6 * py + m10 * pz + m14;
+    }
+
+    // Sort indices back-to-front (most negative depth = farthest)
+    indices.sort((a: number, b: number) => depths[a] - depths[b]);
   }
 
   render() {
     if (!this.device || !this.context || !this.pipeline || !this.uniformBuffer || !this.bindGroup) return;
-    if (!this.vertexBuffer || this.vertexCount === 0) return;
+    if (!this.vertexBuffer || !this.indexBuffer || this.vertexCount === 0) return;
 
     const aspect = this.canvas.width / this.canvas.height;
     const view = this.camera.getViewMatrix();
     const proj = this.camera.getProjectionMatrix(aspect);
+
+    // Sort splats back-to-front for correct alpha blending
+    this.sortByDepth(view);
+    if (this.sortedIndices) {
+      this.device.queue.writeBuffer(this.indexBuffer, 0, this.sortedIndices);
+    }
 
     // Upload uniforms: view (64 bytes) then proj (64 bytes)
     this.device.queue.writeBuffer(this.uniformBuffer, 0, view);
@@ -192,7 +267,8 @@ export class SplatRenderer {
     pass.setPipeline(this.pipeline);
     pass.setBindGroup(0, this.bindGroup);
     pass.setVertexBuffer(0, this.vertexBuffer);
-    pass.draw(this.vertexCount);
+    pass.setIndexBuffer(this.indexBuffer, 'uint32');
+    pass.drawIndexed(this.vertexCount);
     pass.end();
 
     this.device.queue.submit([encoder.finish()]);
@@ -200,6 +276,7 @@ export class SplatRenderer {
 
   destroy() {
     this.vertexBuffer?.destroy();
+    this.indexBuffer?.destroy();
     this.uniformBuffer?.destroy();
     this.device?.destroy();
     this.device = null;
@@ -207,6 +284,10 @@ export class SplatRenderer {
     this.pipeline = null;
     this.bindGroup = null;
     this.vertexBuffer = null;
+    this.indexBuffer = null;
+    this.splatPositions = null;
+    this.sortedIndices = null;
+    this.depthBuffer = null;
   }
 }
 

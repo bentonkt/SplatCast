@@ -9,6 +9,7 @@ export class SyncManager {
   annotationMap: Y.Map<Annotation>;
   awareness: Awareness;
   strokes: Y.Array<Stroke>;
+  undoManager: Y.UndoManager;
 
   constructor(roomId: string, serverUrl = 'ws://localhost:4000') {
     this.doc = new Y.Doc();
@@ -16,6 +17,7 @@ export class SyncManager {
     this.annotationMap = this.doc.getMap<Annotation>('annotationMap');
     this.awareness = this.provider.awareness;
     this.strokes = this.doc.getArray<Stroke>('strokes');
+    this.undoManager = new Y.UndoManager([this.annotationMap, this.strokes], { captureTimeout: 0 });
   }
 
   addAnnotation(annotation: Annotation) {
@@ -102,7 +104,31 @@ export class SyncManager {
     return this.strokes.toArray();
   }
 
+  undo() {
+    this.undoManager.undo();
+  }
+
+  redo() {
+    this.undoManager.redo();
+  }
+
+  canUndo(): boolean {
+    return this.undoManager.undoStack.length > 0;
+  }
+
+  canRedo(): boolean {
+    return this.undoManager.redoStack.length > 0;
+  }
+
+  onUndoRedoChange(callback: (canUndo: boolean, canRedo: boolean) => void) {
+    const handler = () => callback(this.canUndo(), this.canRedo());
+    this.undoManager.on('stack-item-added', handler);
+    this.undoManager.on('stack-item-popped', handler);
+    this.undoManager.on('stack-cleared', handler);
+  }
+
   destroy() {
+    this.undoManager.destroy();
     this.provider.destroy();
     this.doc.destroy();
   }

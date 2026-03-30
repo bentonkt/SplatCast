@@ -1,7 +1,6 @@
 # SplatCast Backlog
 
 ## In Progress
-- [ ] Semantic region tagging — paint or lasso-select groups of splats and assign semantic labels (e.g. "structural column", "HVAC duct", "exterior wall") that persist across sessions, enabling filtered views by trade/discipline and searchable scene elements
 
 ## Up Next
 
@@ -12,6 +11,7 @@
 - [ ] Multi-scene composite view — load and spatially register multiple separate splat files into a unified scene (e.g. combining scans from different trades or floors) with per-scene visibility toggles and spatial conflict detection
 
 ## Done
+- [x] Semantic region tagging — paint or lasso-select groups of splats and assign semantic labels (e.g. "structural column", "HVAC duct", "exterior wall") that persist across sessions, enabling filtered views by trade/discipline and searchable scene elements — PR https://github.com/bentonkt/SplatCast/pull/40
 - [x] BCF issue export — export spatial tasks and annotations as BCF-format files (.bcfzip) with viewpoint snapshots and camera positions for integration with BIM coordination platforms — PR https://github.com/bentonkt/SplatCast/pull/39
 - [x] Spatial notification subscriptions — draw a 3D bounding box to "watch" a region and receive in-app notifications when other users add annotations, tasks, or measurements inside that volume — PR https://github.com/bentonkt/SplatCast/pull/38
 - [x] WebXR immersive viewing — enter the shared splat scene in AR or VR via the WebXR Device API, with annotations and presence synced across flat-screen and immersive users — PR https://github.com/bentonkt/SplatCast/pull/37

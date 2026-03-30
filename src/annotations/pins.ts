@@ -13,6 +13,7 @@ export class PinManager {
   private lastTapTime = 0;
   private lastTapX = 0;
   private lastTapY = 0;
+  private multiTouchActive = false;
 
   constructor(
     private canvas: HTMLCanvasElement,
@@ -32,6 +33,7 @@ export class PinManager {
     document.body.appendChild(this.colorIndicator);
 
     this.canvas.addEventListener('dblclick', this.onDoubleClick);
+    this.canvas.addEventListener('touchstart', this.onTouchStart);
     this.canvas.addEventListener('touchend', this.onTouchEnd);
     this.sync.onAnnotationsChange((annotations) => {
       this.pins = annotations;
@@ -107,8 +109,26 @@ export class PinManager {
     this.handleAnnotation(e.clientX, e.clientY);
   };
 
+  private onTouchStart = (e: TouchEvent) => {
+    if (e.touches.length >= 2) {
+      this.multiTouchActive = true;
+    }
+  };
+
   private onTouchEnd = (e: TouchEvent) => {
     if (e.changedTouches.length !== 1) return;
+
+    // When all fingers are lifted after a multi-touch gesture, reset the flag
+    // and discard this tap so pinch-release doesn't trigger annotation placement
+    if (e.touches.length === 0 && this.multiTouchActive) {
+      this.multiTouchActive = false;
+      this.lastTapTime = 0;
+      return;
+    }
+
+    // Still mid-gesture with remaining fingers — ignore
+    if (this.multiTouchActive) return;
+
     const touch = e.changedTouches[0];
     const now = Date.now();
     const dx = touch.clientX - this.lastTapX;
@@ -268,6 +288,7 @@ export class PinManager {
 
   destroy() {
     this.canvas.removeEventListener('dblclick', this.onDoubleClick);
+    this.canvas.removeEventListener('touchstart', this.onTouchStart);
     this.canvas.removeEventListener('touchend', this.onTouchEnd);
     this.overlay.remove();
     this.toolbar.remove();

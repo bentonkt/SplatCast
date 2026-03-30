@@ -5,7 +5,7 @@ export interface SplatData {
   count: number;
 }
 
-export type AnnotationType = 'pin' | 'arrow' | 'text';
+export type AnnotationType = 'pin' | 'arrow' | 'text' | 'measurement';
 
 export interface Annotation {
   id: string;

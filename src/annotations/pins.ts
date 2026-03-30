@@ -10,6 +10,7 @@ export class PinManager {
   readonly userId: string;
   private mode: AnnotationType = 'pin';
   private arrowStart: [number, number, number] | null = null;
+  private measureStart: [number, number, number] | null = null;
   private lastTapTime = 0;
   private lastTapX = 0;
   private lastTapY = 0;
@@ -58,6 +59,7 @@ export class PinManager {
       { type: 'pin', label: '\u{1F4CD}', title: 'Pin (double-click to place)' },
       { type: 'arrow', label: '\u{27A1}', title: 'Arrow (double-click start, then end)' },
       { type: 'text', label: '\u{1F524}', title: 'Text label (double-click to place)' },
+      { type: 'measurement', label: '\u{1F4CF}', title: 'Measure (double-click two points)' },
     ];
 
     for (const m of modes) {
@@ -85,6 +87,7 @@ export class PinManager {
   private setMode(mode: AnnotationType) {
     this.mode = mode;
     this.arrowStart = null;
+    this.measureStart = null;
     this.updateToolbarSelection(this.toolbar);
   }
 
@@ -188,6 +191,25 @@ export class PinManager {
           timestamp: Date.now(),
         });
       }
+    } else if (this.mode === 'measurement') {
+      if (this.measureStart === null) {
+        this.measureStart = pos;
+      } else {
+        const dx = this.measureStart[0] - pos[0];
+        const dy = this.measureStart[1] - pos[1];
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        this.sync.addAnnotation({
+          id: crypto.randomUUID(),
+          type: 'measurement',
+          position: this.measureStart,
+          endPosition: pos,
+          label: distance.toFixed(2),
+          color: getUserColor(this.userId),
+          userId: this.userId,
+          timestamp: Date.now(),
+        });
+        this.measureStart = null;
+      }
     }
   }
 
@@ -208,6 +230,8 @@ export class PinManager {
         this.renderArrow(pin);
       } else if (annotationType === 'text') {
         this.renderText(pin);
+      } else if (annotationType === 'measurement') {
+        this.renderMeasurement(pin);
       }
     }
   }
@@ -375,6 +399,71 @@ export class PinManager {
     el.textContent = pin.label;
     el.title = `${pin.userId} — ${new Date(pin.timestamp).toLocaleTimeString()}`;
     this.overlay.appendChild(el);
+  }
+
+  private renderMeasurement(pin: Annotation) {
+    if (!pin.endPosition) return;
+    const start = this.ndcToScreen(pin.position);
+    const end = this.ndcToScreen(pin.endPosition);
+
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.dataset.annotationType = 'measurement';
+    svg.dataset.annotationId = pin.id;
+    svg.style.cssText = 'position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;';
+    svg.setAttribute('width', String(this.canvas.width));
+    svg.setAttribute('height', String(this.canvas.height));
+
+    // Dashed measurement line
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', String(start.x));
+    line.setAttribute('y1', String(start.y));
+    line.setAttribute('x2', String(end.x));
+    line.setAttribute('y2', String(end.y));
+    line.setAttribute('stroke', pin.color);
+    line.setAttribute('stroke-width', '2');
+    line.setAttribute('stroke-dasharray', '6 4');
+    svg.appendChild(line);
+
+    // Endpoint circles
+    for (const pt of [start, end]) {
+      const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      circle.setAttribute('cx', String(pt.x));
+      circle.setAttribute('cy', String(pt.y));
+      circle.setAttribute('r', '4');
+      circle.setAttribute('fill', pin.color);
+      circle.setAttribute('stroke', 'white');
+      circle.setAttribute('stroke-width', '1.5');
+      svg.appendChild(circle);
+    }
+
+    // Distance label at midpoint
+    const midX = (start.x + end.x) / 2;
+    const midY = (start.y + end.y) / 2;
+
+    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+    const labelText = pin.label;
+    const textWidth = labelText.length * 8 + 12;
+    rect.setAttribute('x', String(midX - textWidth / 2));
+    rect.setAttribute('y', String(midY - 12));
+    rect.setAttribute('width', String(textWidth));
+    rect.setAttribute('height', '22');
+    rect.setAttribute('rx', '4');
+    rect.setAttribute('fill', 'rgba(30,30,50,0.85)');
+    rect.setAttribute('stroke', pin.color);
+    rect.setAttribute('stroke-width', '1');
+    svg.appendChild(rect);
+
+    const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    text.setAttribute('x', String(midX));
+    text.setAttribute('y', String(midY + 4));
+    text.setAttribute('text-anchor', 'middle');
+    text.setAttribute('fill', '#fff');
+    text.setAttribute('font-size', '12');
+    text.setAttribute('font-family', 'system-ui, sans-serif');
+    text.textContent = labelText;
+    svg.appendChild(text);
+
+    this.overlay.appendChild(svg);
   }
 
   destroy() {

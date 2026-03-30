@@ -1,13 +1,13 @@
 # SplatCast Backlog
 
 ## In Progress
-- [ ] Undo/redo — Yjs undo manager for annotation changes
 
 ## Up Next
 
 ## Discovered
 
 ## Done
+- [x] Undo/redo — Yjs undo manager for annotation changes — PR https://github.com/bentonkt/SplatCast/pull/13
 - [x] User presence sidebar — show connected users with their colors — PR https://github.com/bentonkt/SplatCast/pull/12
 - [x] Annotation labels — click a pin to add/edit a text label — PR https://github.com/bentonkt/SplatCast/pull/11
 - [x] Loading UI — progress bar for large splat files, drag-and-drop file loading — PR https://github.com/bentonkt/SplatCast/pull/10

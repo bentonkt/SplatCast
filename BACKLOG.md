@@ -3,6 +3,11 @@
 ## In Progress
 
 ## Up Next
+- [ ] Guided tour playback — create an ordered sequence of bookmarks with transition animations that auto-play as a cinematic walkthrough, synced so all users watch together
+- [ ] Splat isolation/hiding — lasso-select a region of splats to hide or isolate, revealing occluded interior geometry; selection state synced via Yjs
+- [ ] Viewport follow mode — click a user's avatar to lock your camera to theirs in real time, with one-click unfollow to return to independent control
+- [ ] Side-by-side scene comparison — load two splat files into split or overlay viewports with synced camera controls for reviewing changes between captures
+- [ ] Annotation export to JSON/CSV — export all annotations, measurements, threads, and bookmarks as structured data with 3D coordinates for external tools
 
 ## Discovered
 

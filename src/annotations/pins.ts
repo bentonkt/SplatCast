@@ -3,6 +3,7 @@ import { SyncManager } from '../collab/sync';
 import { getUserColor, createColorIndicator } from '../collab/user-colors';
 import { captureScreenshot } from '../screenshot';
 import { exportJSON, exportCSV } from '../export';
+import { RoleManager } from '../collab/roles';
 
 export class PinManager {
   private pins: Annotation[] = [];
@@ -271,6 +272,8 @@ export class PinManager {
   };
 
   private handleAnnotation(clientX: number, clientY: number) {
+    const rm = (window as Record<string, unknown>)['__roleManager'] as RoleManager | undefined;
+    if (rm && !rm.canAnnotate()) return;
     const pos = this.toNdc(clientX, clientY);
 
     if (this.mode === 'pin') {

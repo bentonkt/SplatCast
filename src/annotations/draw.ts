@@ -1,5 +1,6 @@
 import { Stroke, StrokePoint } from '../types';
 import { SyncManager } from '../collab/sync';
+import { RoleManager } from '../collab/roles';
 
 export class DrawManager {
   private strokes: Stroke[] = [];
@@ -84,6 +85,8 @@ export class DrawManager {
 
   private onMouseDown = (e: MouseEvent) => {
     if (!this.drawingEnabled) return;
+    const rm = (window as Record<string, unknown>)['__roleManager'] as RoleManager | undefined;
+    if (rm && !rm.canAnnotate()) return;
     e.preventDefault();
     e.stopImmediatePropagation();
     this.drawing = true;
@@ -105,6 +108,8 @@ export class DrawManager {
 
   private onTouchStart = (e: TouchEvent) => {
     if (!this.drawingEnabled || e.touches.length !== 1) return;
+    const rm = (window as Record<string, unknown>)['__roleManager'] as RoleManager | undefined;
+    if (rm && !rm.canAnnotate()) return;
     e.preventDefault();
     e.stopImmediatePropagation();
     this.drawing = true;

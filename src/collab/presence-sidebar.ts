@@ -1,6 +1,7 @@
-import { UserPresence } from '../types';
+import { UserPresence, UserRole } from '../types';
 import { SyncManager } from './sync';
 import { getUserColor } from './user-colors';
+import { RoleManager } from './roles';
 
 export class PresenceSidebar {
   private sidebar: HTMLDivElement;
@@ -12,6 +13,7 @@ export class PresenceSidebar {
   private followingUserId: string | null = null;
   private followBanner: HTMLDivElement | null = null;
   private onFollowChange: ((userId: string | null) => void) | null = null;
+  private roleManager: RoleManager | null = null;
 
   constructor(private sync: SyncManager) {
     this.userId = crypto.randomUUID().slice(0, 8);
@@ -65,6 +67,7 @@ export class PresenceSidebar {
       userId: this.userId,
       color: this.color,
       name: this.name,
+      role: 'commenter',
     });
 
     // Listen for changes
@@ -74,6 +77,26 @@ export class PresenceSidebar {
 
     // Initial render
     this.renderUsers(this.sync.getPresences());
+  }
+
+  setRoleManager(roleManager: RoleManager) {
+    this.roleManager = roleManager;
+    // Update local presence with the actual role
+    this.sync.setLocalPresence({
+      userId: this.userId,
+      color: this.color,
+      name: this.name,
+      role: roleManager.getLocalRole(),
+    });
+    roleManager.onChange(() => {
+      this.sync.setLocalPresence({
+        userId: this.userId,
+        color: this.color,
+        name: this.name,
+        role: roleManager.getLocalRole(),
+      });
+      this.renderUsers(this.sync.getPresences());
+    });
   }
 
   setFollowChangeHandler(handler: (userId: string | null) => void) {
@@ -166,11 +189,56 @@ export class PresenceSidebar {
       `;
       row.appendChild(dot);
 
+      const nameContainer = document.createElement('div');
+      nameContainer.style.cssText = 'overflow:hidden;flex:1;display:flex;flex-direction:column;gap:1px;';
+
       const nameEl = document.createElement('span');
       nameEl.className = 'presence-name';
       nameEl.textContent = isLocal ? `${user.name} (you)` : user.name;
-      nameEl.style.cssText = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;';
-      row.appendChild(nameEl);
+      nameEl.style.cssText = 'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+      nameContainer.appendChild(nameEl);
+
+      const userRole = this.roleManager ? this.roleManager.getRoleForUser(user.userId) : (user.role ?? 'commenter');
+      const roleColors: Record<UserRole, string> = {
+        viewer: '#888',
+        commenter: '#ffd93d',
+        editor: '#4ecdc4',
+      };
+      const roleEl = document.createElement('span');
+      roleEl.className = 'presence-role';
+      roleEl.textContent = userRole;
+      roleEl.style.cssText = `font-size:10px;color:${roleColors[userRole]};text-transform:capitalize;`;
+      nameContainer.appendChild(roleEl);
+
+      row.appendChild(nameContainer);
+
+      const btnContainer = document.createElement('div');
+      btnContainer.style.cssText = 'display:flex;gap:4px;align-items:center;flex-shrink:0;';
+
+      if (!isLocal && this.roleManager && this.roleManager.getLocalRole() === 'editor') {
+        const roleSelect = document.createElement('select');
+        roleSelect.className = 'role-select';
+        roleSelect.dataset.userId = user.userId;
+        roleSelect.style.cssText = `
+          padding:1px 2px;border:1px solid rgba(255,255,255,0.2);border-radius:3px;
+          background:rgba(0,0,0,0.3);color:#fff;cursor:pointer;
+          font:9px system-ui,sans-serif;flex-shrink:0;
+        `;
+        const roles: UserRole[] = ['viewer', 'commenter', 'editor'];
+        for (const r of roles) {
+          const opt = document.createElement('option');
+          opt.value = r;
+          opt.textContent = r.charAt(0).toUpperCase() + r.slice(1);
+          opt.selected = r === userRole;
+          roleSelect.appendChild(opt);
+        }
+        roleSelect.addEventListener('change', (e) => {
+          e.stopPropagation();
+          const newRole = roleSelect.value as UserRole;
+          this.roleManager!.setRoleForUser(user.userId, newRole);
+        });
+        btnContainer.appendChild(roleSelect);
+      }
 
       if (!isLocal) {
         const followBtn = document.createElement('button');
@@ -190,9 +258,10 @@ export class PresenceSidebar {
             this.followUser(user.userId);
           }
         });
-        row.appendChild(followBtn);
+        btnContainer.appendChild(followBtn);
       }
 
+      row.appendChild(btnContainer);
       this.userList.appendChild(row);
     }
   }

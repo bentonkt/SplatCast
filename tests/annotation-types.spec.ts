@@ -21,7 +21,7 @@ test('annotation toolbar renders with three mode buttons', async ({ page }) => {
   const room = uniqueRoom('toolbar');
   await waitForAppReady(page, room);
   const buttons = page.locator('#annotation-toolbar .toolbar-btn');
-  await expect(buttons).toHaveCount(3);
+  await expect(buttons).toHaveCount(4);
 });
 
 test('clicking toolbar buttons switches annotation mode', async ({ page }) => {

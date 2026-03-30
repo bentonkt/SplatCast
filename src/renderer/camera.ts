@@ -128,6 +128,22 @@ export class OrbitCamera {
     };
   }
 
+  getOrbitalState(): { theta: number; phi: number; radius: number; target: [number, number, number] } {
+    return {
+      theta: this.theta,
+      phi: this.phi,
+      radius: this.radius,
+      target: [...this.target] as [number, number, number],
+    };
+  }
+
+  setOrbitalState(state: { theta: number; phi: number; radius: number; target: [number, number, number] }) {
+    this.theta = state.theta;
+    this.phi = state.phi;
+    this.radius = state.radius;
+    this.target = [...state.target] as [number, number, number];
+  }
+
   getViewMatrix(): Float32Array {
     const eye = this.getPosition();
     const center = this.target;

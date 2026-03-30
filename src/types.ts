@@ -51,3 +51,15 @@ export interface UserPresence {
   color: string;
   name: string;
 }
+
+export interface Bookmark {
+  id: string;
+  name: string;
+  theta: number;
+  phi: number;
+  radius: number;
+  target: [number, number, number];
+  userId: string;
+  color: string;
+  timestamp: number;
+}

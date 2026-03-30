@@ -1,9 +1,9 @@
 # SplatCast Backlog
 
 ## In Progress
+- [ ] Mobile touch controls — pinch to zoom, two-finger drag to orbit, tap to annotate
 
 ## Up Next
-- [ ] Mobile touch controls — pinch to zoom, two-finger drag to orbit, tap to annotate
 - [ ] Improved splat rendering — sort splats by depth, implement alpha blending for transparency
 - [ ] Splat file format support — support .ply files in addition to .splat format
 - [ ] Loading UI — progress bar for large splat files, drag-and-drop file loading

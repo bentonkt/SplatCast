@@ -11,6 +11,7 @@ import { ClipPlanesPanel } from './collab/clip-planes';
 import { TourPanel } from './collab/tour';
 import { LassoPanel } from './collab/lasso';
 import { ComparePanel } from './collab/compare';
+import { VersionDiffPanel } from './collab/version-diff';
 import { HeatmapOverlay } from './annotations/heatmap';
 import { SplatInspector } from './renderer/inspector';
 import { TimelinePanel } from './collab/timeline';
@@ -123,6 +124,7 @@ async function startViewer(roomId: string) {
   void lassoPanel;
 
   const comparePanel = new ComparePanel(canvas, camera, renderer);
+  const diffPanel = new VersionDiffPanel(canvas, camera, renderer);
 
   const splatInspector = new SplatInspector(canvas, renderer, camera);
   void splatInspector;
@@ -175,7 +177,7 @@ async function startViewer(roomId: string) {
         }
       }
 
-      if (!comparePanel.isActive()) {
+      if (!comparePanel.isActive() && !diffPanel.isActive()) {
         renderer.render();
       }
 

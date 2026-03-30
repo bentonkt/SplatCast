@@ -3,6 +3,7 @@ import { SplatRenderer, loadSplatFile } from './renderer/splat-renderer';
 import { SyncManager } from './collab/sync';
 import { PinManager } from './annotations/pins';
 import { CursorManager } from './collab/cursors';
+import { DrawManager } from './annotations/draw';
 
 async function init() {
   const canvas = document.getElementById('canvas') as HTMLCanvasElement;
@@ -22,6 +23,7 @@ async function init() {
   const sync = new SyncManager(roomId);
   const pins = new PinManager(canvas, sync);
   const cursors = new CursorManager(canvas, sync);
+  const draw = new DrawManager(canvas, sync);
 
   const gpuAvailable = await renderer.init();
   if (!gpuAvailable) {

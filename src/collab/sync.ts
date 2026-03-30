@@ -6,30 +6,37 @@ import { Awareness } from 'y-protocols/awareness';
 export class SyncManager {
   doc: Y.Doc;
   provider: WebsocketProvider;
-  annotations: Y.Array<Annotation>;
+  annotationMap: Y.Map<Annotation>;
   awareness: Awareness;
   strokes: Y.Array<Stroke>;
 
   constructor(roomId: string, serverUrl = 'ws://localhost:4000') {
     this.doc = new Y.Doc();
     this.provider = new WebsocketProvider(serverUrl, roomId, this.doc);
-    this.annotations = this.doc.getArray<Annotation>('annotations');
+    this.annotationMap = this.doc.getMap<Annotation>('annotationMap');
     this.awareness = this.provider.awareness;
     this.strokes = this.doc.getArray<Stroke>('strokes');
   }
 
   addAnnotation(annotation: Annotation) {
-    this.annotations.push([annotation]);
+    this.annotationMap.set(annotation.id, annotation);
+  }
+
+  updateAnnotation(id: string, updates: Partial<Pick<Annotation, 'label'>>) {
+    const existing = this.annotationMap.get(id);
+    if (existing) {
+      this.annotationMap.set(id, { ...existing, ...updates });
+    }
   }
 
   onAnnotationsChange(callback: (annotations: Annotation[]) => void) {
-    this.annotations.observe(() => {
-      callback(this.annotations.toArray());
+    this.annotationMap.observe(() => {
+      callback(this.getAnnotations());
     });
   }
 
   getAnnotations(): Annotation[] {
-    return this.annotations.toArray();
+    return Array.from(this.annotationMap.values());
   }
 
   setLocalCursor(cursor: CursorPresence) {

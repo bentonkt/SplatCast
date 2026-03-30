@@ -1,7 +1,6 @@
 # SplatCast Backlog
 
 ## In Progress
-- [ ] Annotation persistence — save/load annotation state to server or localStorage
 
 ## Up Next
 - [ ] Mobile touch controls — pinch to zoom, two-finger drag to orbit, tap to annotate
@@ -15,6 +14,7 @@
 ## Discovered
 
 ## Done
+- [x] Annotation persistence — save/load Yjs doc state to disk on server — PR https://github.com/bentonkt/SplatCast/pull/6
 - [x] Room system — URL-based room IDs (/room/<id>), each room is a separate Yjs doc — PR https://github.com/bentonkt/SplatCast/pull/5
 - [x] Color-coded per-user annotations — assign consistent colors per userId — PR https://github.com/bentonkt/SplatCast/pull/4
 - [x] Freehand drawing annotations — draw on the scene with mouse, strokes synced via Yjs — PR https://github.com/bentonkt/SplatCast/pull/3

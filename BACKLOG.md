@@ -1,9 +1,9 @@
 # SplatCast Backlog
 
 ## In Progress
+- [ ] Time-travel annotation playback — timeline scrubber replaying annotation history chronologically with optional camera follow
 
 ## Up Next
-- [ ] Time-travel annotation playback — timeline scrubber replaying annotation history chronologically with optional camera follow
 - [ ] Spatial audio notes — record short audio clips attached to 3D positions, click speaker icon to play back
 
 ## Discovered

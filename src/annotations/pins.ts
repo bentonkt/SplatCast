@@ -397,36 +397,50 @@ export class PinManager {
       font:13px system-ui,sans-serif;outline:none;
     `;
 
-    let labelCancelled = false;
+    let labelDirty = false;
+    let panelClosed = false;
+    const originalLabel = pin.label;
 
-    // Forward-declare closeOnOutside so closePanel can reference it
+    // Forward-declare closeOnOutside and escapeHandler so closePanel can remove them
     let closeOnOutside: ((e: MouseEvent) => void) | null = null;
+    let escapeHandler: ((e: KeyboardEvent) => void) | null = null;
 
     const saveLabel = () => {
-      if (labelCancelled) return;
+      if (!labelDirty || panelClosed) return;
       const newLabel = labelInput.value.trim();
-      this.sync.updateAnnotation(pin.id, { label: newLabel });
+      if (newLabel !== originalLabel) {
+        this.sync.updateAnnotation(pin.id, { label: newLabel });
+      }
+      labelDirty = false;
     };
 
-    const closePanel = (save = true) => {
-      if (save) saveLabel();
+    const closePanel = () => {
+      panelClosed = true;
       this.openThreadPinId = null;
       panel.remove();
       if (closeOnOutside) {
         document.removeEventListener('mousedown', closeOnOutside);
         closeOnOutside = null;
       }
+      if (escapeHandler) {
+        document.removeEventListener('keydown', escapeHandler);
+        escapeHandler = null;
+      }
     };
+
+    labelInput.addEventListener('input', () => {
+      labelDirty = true;
+    });
 
     labelInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') {
         saveLabel();
         replyInput.focus();
-      } else if (e.key === 'Escape') {
-        labelCancelled = true;
-        closePanel(false);
       }
-      e.stopPropagation();
+      // Let Escape propagate to the document-level handler
+      if (e.key !== 'Escape') {
+        e.stopPropagation();
+      }
     });
 
     labelInput.addEventListener('blur', () => {
@@ -488,10 +502,11 @@ export class PinManager {
           });
           replyInput.value = '';
         }
-      } else if (e.key === 'Escape') {
-        closePanel();
       }
-      e.stopPropagation();
+      // Let Escape propagate to the document-level handler
+      if (e.key !== 'Escape') {
+        e.stopPropagation();
+      }
     });
 
     replyArea.appendChild(replyInput);
@@ -504,6 +519,14 @@ export class PinManager {
       }
     };
     setTimeout(() => document.addEventListener('mousedown', closeOnOutside), 0);
+
+    // Document-level Escape handler — works regardless of focus
+    escapeHandler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        closePanel();
+      }
+    };
+    document.addEventListener('keydown', escapeHandler);
 
     this.openThreadPinId = pin.id;
     document.body.appendChild(panel);

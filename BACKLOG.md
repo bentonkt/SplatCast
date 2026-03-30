@@ -1,7 +1,6 @@
 # SplatCast Backlog
 
 ## In Progress
-- [ ] Viewport follow mode — click a user's avatar to lock your camera to theirs in real time, with one-click unfollow to return to independent control
 
 ## Up Next
 - [ ] Side-by-side scene comparison — load two splat files into split or overlay viewports with synced camera controls for reviewing changes between captures
@@ -10,6 +9,7 @@
 ## Discovered
 
 ## Done
+- [x] Viewport follow mode — click a user's avatar to lock your camera to theirs in real time, with one-click unfollow — PR https://github.com/bentonkt/SplatCast/pull/22
 - [x] Splat isolation/hiding — lasso-select to hide or isolate splat regions, synced across users — PR https://github.com/bentonkt/SplatCast/pull/21
 - [x] Guided tour playback — cinematic walkthrough of bookmarks synced across users — PR https://github.com/bentonkt/SplatCast/pull/20
 - [x] Clipping planes — interactive cross-section sliders to cut through the splat scene, synced across users — PR https://github.com/bentonkt/SplatCast/pull/19

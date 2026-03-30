@@ -1,6 +1,7 @@
 import { Annotation, AnnotationType } from '../types';
 import { SyncManager } from '../collab/sync';
 import { getUserColor, createColorIndicator } from '../collab/user-colors';
+import { captureScreenshot } from '../screenshot';
 
 export class PinManager {
   private pins: Annotation[] = [];
@@ -36,6 +37,7 @@ export class PinManager {
     this.canvas.addEventListener('dblclick', this.onDoubleClick);
     this.canvas.addEventListener('touchstart', this.onTouchStart);
     this.canvas.addEventListener('touchend', this.onTouchEnd);
+    document.addEventListener('keydown', this.onKeyDown);
     this.sync.onAnnotationsChange((annotations) => {
       this.pins = annotations;
       this.renderPins();
@@ -80,6 +82,28 @@ export class PinManager {
       toolbar.appendChild(btn);
     }
 
+    // Separator
+    const sep = document.createElement('div');
+    sep.style.cssText = 'width:1px;height:24px;background:rgba(255,255,255,0.2);margin:0 4px;';
+    toolbar.appendChild(sep);
+
+    // Screenshot button
+    const screenshotBtn = document.createElement('button');
+    screenshotBtn.className = 'toolbar-btn';
+    screenshotBtn.id = 'screenshot-btn';
+    screenshotBtn.textContent = '\u{1F4F7}';
+    screenshotBtn.title = 'Export screenshot (S)';
+    screenshotBtn.style.cssText = `
+      width:36px;height:36px;border:2px solid transparent;border-radius:6px;
+      background:rgba(255,255,255,0.1);cursor:pointer;font-size:18px;
+      display:flex;align-items:center;justify-content:center;
+      color:white;pointer-events:auto;
+    `;
+    screenshotBtn.addEventListener('click', () => {
+      captureScreenshot(this.canvas);
+    });
+    toolbar.appendChild(screenshotBtn);
+
     this.updateToolbarSelection(toolbar);
     return toolbar;
   }
@@ -107,6 +131,15 @@ export class PinManager {
       0,
     ];
   }
+
+  private onKeyDown = (e: KeyboardEvent) => {
+    if (e.repeat) return;
+    if (e.key === 's' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') return;
+      captureScreenshot(this.canvas);
+    }
+  };
 
   private onDoubleClick = (e: MouseEvent) => {
     this.handleAnnotation(e.clientX, e.clientY);
@@ -470,6 +503,7 @@ export class PinManager {
     this.canvas.removeEventListener('dblclick', this.onDoubleClick);
     this.canvas.removeEventListener('touchstart', this.onTouchStart);
     this.canvas.removeEventListener('touchend', this.onTouchEnd);
+    document.removeEventListener('keydown', this.onKeyDown);
     this.overlay.remove();
     this.toolbar.remove();
     this.colorIndicator.remove();

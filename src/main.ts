@@ -6,6 +6,7 @@ import { CursorManager } from './collab/cursors';
 import { DrawManager } from './annotations/draw';
 import { PresenceSidebar } from './collab/presence-sidebar';
 import { UndoRedoToolbar } from './collab/undo-redo';
+import { BookmarkPanel } from './collab/bookmarks';
 import { parseRoute, generateRoomId, navigateToRoom } from './router';
 
 function showLobby() {
@@ -50,6 +51,7 @@ async function startViewer(roomId: string) {
   });
 
   const camera = new OrbitCamera(canvas);
+  (window as Record<string, unknown>)['__camera'] = camera;
   const renderer = new SplatRenderer(canvas, camera);
 
   // Collaboration works regardless of WebGPU availability
@@ -59,6 +61,7 @@ async function startViewer(roomId: string) {
   const draw = new DrawManager(canvas, sync);
   const presence = new PresenceSidebar(sync);
   const undoRedo = new UndoRedoToolbar(sync);
+  const bookmarkPanel = new BookmarkPanel(sync, camera);
 
   // Suppress unused variable warnings — managers attach event listeners
   void pins;
@@ -66,6 +69,7 @@ async function startViewer(roomId: string) {
   void draw;
   void presence;
   void undoRedo;
+  void bookmarkPanel;
 
   const gpuAvailable = await renderer.init();
   if (!gpuAvailable) {

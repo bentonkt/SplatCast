@@ -1,6 +1,6 @@
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
-import { Annotation, CursorPresence, Stroke, UserPresence } from '../types';
+import { Annotation, Bookmark, CursorPresence, Stroke, UserPresence } from '../types';
 import { Awareness } from 'y-protocols/awareness';
 
 export class SyncManager {
@@ -9,6 +9,7 @@ export class SyncManager {
   annotationMap: Y.Map<Annotation>;
   awareness: Awareness;
   strokes: Y.Array<Stroke>;
+  bookmarks: Y.Map<Bookmark>;
   undoManager: Y.UndoManager;
 
   constructor(roomId: string, serverUrl = 'ws://localhost:4000') {
@@ -17,7 +18,8 @@ export class SyncManager {
     this.annotationMap = this.doc.getMap<Annotation>('annotationMap');
     this.awareness = this.provider.awareness;
     this.strokes = this.doc.getArray<Stroke>('strokes');
-    this.undoManager = new Y.UndoManager([this.annotationMap, this.strokes], { captureTimeout: 0 });
+    this.bookmarks = this.doc.getMap<Bookmark>('bookmarks');
+    this.undoManager = new Y.UndoManager([this.annotationMap, this.strokes, this.bookmarks], { captureTimeout: 0 });
   }
 
   addAnnotation(annotation: Annotation) {
@@ -125,6 +127,24 @@ export class SyncManager {
     this.undoManager.on('stack-item-added', handler);
     this.undoManager.on('stack-item-popped', handler);
     this.undoManager.on('stack-cleared', handler);
+  }
+
+  addBookmark(bookmark: Bookmark) {
+    this.bookmarks.set(bookmark.id, bookmark);
+  }
+
+  removeBookmark(id: string) {
+    this.bookmarks.delete(id);
+  }
+
+  getBookmarks(): Bookmark[] {
+    return Array.from(this.bookmarks.values());
+  }
+
+  onBookmarksChange(callback: (bookmarks: Bookmark[]) => void) {
+    this.bookmarks.observe(() => {
+      callback(this.getBookmarks());
+    });
   }
 
   destroy() {

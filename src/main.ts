@@ -10,6 +10,7 @@ import { BookmarkPanel } from './collab/bookmarks';
 import { ClipPlanesPanel } from './collab/clip-planes';
 import { TourPanel } from './collab/tour';
 import { LassoPanel } from './collab/lasso';
+import { ComparePanel } from './collab/compare';
 import { parseRoute, generateRoomId, navigateToRoom } from './router';
 
 function showLobby() {
@@ -112,6 +113,9 @@ async function startViewer(roomId: string) {
 
   const lassoPanel = new LassoPanel(canvas, sync, renderer, camera);
   void lassoPanel;
+
+  const comparePanel = new ComparePanel(canvas, camera, renderer);
+  void comparePanel;
 
   // Loading overlay helpers
   const loadingOverlay = document.getElementById('loading-overlay')!;

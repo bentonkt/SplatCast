@@ -6,6 +6,7 @@ export class HeatmapOverlay {
   private heatCanvas: HTMLCanvasElement;
   private ctx: CanvasRenderingContext2D;
   private active = false;
+  private suppressedByCompare = false;
   private annotations: Annotation[] = [];
   private sourceCanvas: HTMLCanvasElement;
 
@@ -42,6 +43,18 @@ export class HeatmapOverlay {
         this.toggle();
       }
     });
+
+    // Hide heatmap when compare mode activates, restore when it deactivates
+    document.addEventListener('compare-mode-change', ((e: CustomEvent<{ active: boolean }>) => {
+      if (e.detail.active && this.active) {
+        this.suppressedByCompare = true;
+        this.heatCanvas.style.display = 'none';
+      } else if (!e.detail.active && this.suppressedByCompare) {
+        this.suppressedByCompare = false;
+        this.heatCanvas.style.display = 'block';
+        this.render();
+      }
+    }) as EventListener);
   }
 
   private createToggleButton() {

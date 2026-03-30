@@ -112,17 +112,32 @@ export class SplatInspector {
     const view = this.camera.getViewMatrix();
     const proj = this.camera.getProjectionMatrix(aspect);
 
-    // Find nearest splat to click position in screen space
+    // Get visibility state: hidden splats and clip bounds
+    const hiddenSet = this.renderer.getHiddenSet();
+    const clip = this.renderer.getClipBounds();
+
+    // Find nearest visible splat to click position in screen space
+    // When 2D distances are similar (within 2px), prefer the frontmost (closest depth)
     let bestIdx = -1;
     let bestDist = Infinity;
+    let bestDepth = Infinity;
     const threshold = 20; // pixels
+    const depthTolerance = 2; // pixels — within this range, prefer closer depth
 
     for (let i = 0; i < data.count; i++) {
+      // Skip hidden splats
+      if (hiddenSet.size > 0 && hiddenSet.has(i)) continue;
+
       const px = data.positions[i * 3];
       const py = data.positions[i * 3 + 1];
       const pz = data.positions[i * 3 + 2];
 
-      // World -> clip space
+      // Skip clipped splats
+      if (px < clip.min[0] || px > clip.max[0] ||
+          py < clip.min[1] || py > clip.max[1] ||
+          pz < clip.min[2] || pz > clip.max[2]) continue;
+
+      // World -> view/clip space
       const vx = view[0] * px + view[4] * py + view[8] * pz + view[12];
       const vy = view[1] * px + view[5] * py + view[9] * pz + view[13];
       const vz = view[2] * px + view[6] * py + view[10] * pz + view[14];
@@ -143,10 +158,17 @@ export class SplatInspector {
       const dx = screenX - clientX;
       const dy = screenY - clientY;
       const dist = Math.sqrt(dx * dx + dy * dy);
+      const depth = vz / vw; // view-space depth for tie-breaking
 
-      if (dist < bestDist && dist < threshold) {
-        bestDist = dist;
-        bestIdx = i;
+      if (dist < threshold) {
+        // If within tolerance of best 2D distance, prefer closer depth (frontmost)
+        const isBetter = dist < bestDist - depthTolerance ||
+          (dist < bestDist + depthTolerance && depth < bestDepth);
+        if (isBetter) {
+          bestDist = dist;
+          bestDepth = depth;
+          bestIdx = i;
+        }
       }
     }
 

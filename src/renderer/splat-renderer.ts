@@ -363,6 +363,17 @@ export class SplatRenderer {
     return this.loadedData;
   }
 
+  getHiddenSet(): Set<number> {
+    return this.hiddenSet;
+  }
+
+  getClipBounds(): { min: [number, number, number]; max: [number, number, number] } {
+    return {
+      min: [this.clipData[0], this.clipData[1], this.clipData[2]],
+      max: [this.clipData[4], this.clipData[5], this.clipData[6]],
+    };
+  }
+
   setClipPlanes(planes: ClipPlanes) {
     if (!this.device || !this.clipBuffer) return;
     this.clipData[0] = planes.xMin;

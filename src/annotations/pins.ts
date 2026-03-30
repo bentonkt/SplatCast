@@ -148,7 +148,7 @@ export class PinManager {
 
     // Resolve filter toggle
     const resolveBtn = document.createElement('button');
-    resolveBtn.className = 'toolbar-btn';
+    resolveBtn.className = 'toolbar-toggle-btn';
     resolveBtn.id = 'resolve-filter-btn';
     resolveBtn.textContent = '\u2705';
     resolveBtn.title = 'Toggle resolved annotations (R)';

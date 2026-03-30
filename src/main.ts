@@ -9,6 +9,7 @@ import { UndoRedoToolbar } from './collab/undo-redo';
 import { BookmarkPanel } from './collab/bookmarks';
 import { ClipPlanesPanel } from './collab/clip-planes';
 import { TourPanel } from './collab/tour';
+import { LassoPanel } from './collab/lasso';
 import { parseRoute, generateRoomId, navigateToRoom } from './router';
 
 function showLobby() {
@@ -55,9 +56,11 @@ async function startViewer(roomId: string) {
   const camera = new OrbitCamera(canvas);
   (window as Record<string, unknown>)['__camera'] = camera;
   const renderer = new SplatRenderer(canvas, camera);
+  (window as Record<string, unknown>)['__renderer'] = renderer;
 
   // Collaboration works regardless of WebGPU availability
   const sync = new SyncManager(roomId);
+  (window as Record<string, unknown>)['__syncManager'] = sync;
   const pins = new PinManager(canvas, sync);
   const cursors = new CursorManager(canvas, sync);
   const draw = new DrawManager(canvas, sync);
@@ -90,6 +93,9 @@ async function startViewer(roomId: string) {
   // device/buffers exist when initial synced state is applied.
   const clipPlanesPanel = new ClipPlanesPanel(sync, renderer);
   void clipPlanesPanel;
+
+  const lassoPanel = new LassoPanel(canvas, sync, renderer, camera);
+  void lassoPanel;
 
   // Loading overlay helpers
   const loadingOverlay = document.getElementById('loading-overlay')!;

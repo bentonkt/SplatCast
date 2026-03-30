@@ -73,6 +73,9 @@ export class SplatRenderer {
   private depthBuffer: Float32Array | null = null;
   // Clip planes: [xMin, yMin, zMin, 0, xMax, yMax, zMax, 0]
   private clipData = new Float32Array(8);
+  // Hidden splat indices — filtered out during depth sort
+  private hiddenSet: Set<number> = new Set();
+  private drawCount = 0;
 
   constructor(private canvas: HTMLCanvasElement, private camera: OrbitCamera) {}
 
@@ -246,9 +249,10 @@ export class SplatRenderer {
     this.sortedIndices = indices;
     this.depthBuffer = new Float32Array(count);
     this.vertexCount = count;
+    this.drawCount = count;
   }
 
-  /** Sort splat indices back-to-front by view-space depth */
+  /** Sort splat indices back-to-front by view-space depth, filtering hidden */
   private sortByDepth(viewMatrix: Float32Array) {
     if (!this.splatPositions || !this.sortedIndices || !this.depthBuffer) return;
 
@@ -256,6 +260,7 @@ export class SplatRenderer {
     const indices = this.sortedIndices;
     const depths = this.depthBuffer;
     const count = this.vertexCount;
+    const hidden = this.hiddenSet;
 
     // Extract view-space Z row from view matrix (row 2 in column-major)
     const m2  = viewMatrix[2];
@@ -271,8 +276,25 @@ export class SplatRenderer {
       depths[i] = m2 * px + m6 * py + m10 * pz + m14;
     }
 
-    // Sort indices back-to-front (most negative depth = farthest)
-    indices.sort((a: number, b: number) => depths[a] - depths[b]);
+    // Rebuild index list, excluding hidden splats
+    let writeIdx = 0;
+    if (hidden.size > 0) {
+      for (let i = 0; i < count; i++) {
+        if (!hidden.has(i)) {
+          indices[writeIdx++] = i;
+        }
+      }
+    } else {
+      for (let i = 0; i < count; i++) {
+        indices[i] = i;
+      }
+      writeIdx = count;
+    }
+    this.drawCount = writeIdx;
+
+    // Sort only the visible portion back-to-front
+    const visible = indices.subarray(0, writeIdx);
+    visible.sort((a: number, b: number) => depths[a] - depths[b]);
   }
 
   render() {
@@ -307,10 +329,22 @@ export class SplatRenderer {
     pass.setBindGroup(0, this.bindGroup);
     pass.setVertexBuffer(0, this.vertexBuffer);
     pass.setIndexBuffer(this.indexBuffer, 'uint32');
-    pass.drawIndexed(this.vertexCount);
+    pass.drawIndexed(this.drawCount);
     pass.end();
 
     this.device.queue.submit([encoder.finish()]);
+  }
+
+  setHiddenIndices(hidden: Set<number>) {
+    this.hiddenSet = hidden;
+  }
+
+  getSplatCount(): number {
+    return this.vertexCount;
+  }
+
+  getSplatPositions(): Float32Array | null {
+    return this.splatPositions;
   }
 
   setClipPlanes(planes: ClipPlanes) {

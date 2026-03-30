@@ -1,7 +1,6 @@
 # SplatCast Backlog
 
 ## In Progress
-- [ ] Time-travel annotation playback — timeline scrubber replaying annotation history chronologically with optional camera follow
 
 ## Up Next
 - [ ] Spatial audio notes — record short audio clips attached to 3D positions, click speaker icon to play back
@@ -9,6 +8,7 @@
 ## Discovered
 
 ## Done
+- [x] Time-travel annotation playback — timeline scrubber replaying annotation history chronologically with optional camera follow — PR https://github.com/bentonkt/SplatCast/pull/28
 - [x] Splat point inspector — click any point to see raw Gaussian splat properties (XYZ, RGB, opacity, scale) in a popover tooltip — PR https://github.com/bentonkt/SplatCast/pull/27
 - [x] Annotation heatmap overlay — 2D density visualization projecting annotation clusters onto the viewport to surface feedback hotspots — PR https://github.com/bentonkt/SplatCast/pull/26
 - [x] Annotation resolve/unresolve — mark annotations as resolved with filtering toggle, synced across users for review workflows — PR https://github.com/bentonkt/SplatCast/pull/25

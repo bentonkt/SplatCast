@@ -3,6 +3,11 @@
 ## In Progress
 
 ## Up Next
+- [ ] Version diffing — overlay two versions of the same scene with a slider to highlight geometric differences, letting teams track progress or spot regressions between scans
+- [ ] Role-based permissions — assign viewer, commenter, or editor roles per user so stakeholders can review without accidentally modifying scene state
+- [ ] Spatial anchored tasks — attach to-do items to 3D regions with assignee, priority, and status fields, turning review comments into tracked work items
+- [ ] Cross-section 2D export — define arbitrary slice planes and export the resulting cross-section as a dimensioned 2D SVG for architects and engineers
+- [ ] AI-assisted defect detection — run anomaly detection over splat density/color to automatically flag regions deviating from a reference model
 
 ## Discovered
 

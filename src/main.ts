@@ -1,5 +1,5 @@
 import { OrbitCamera } from './renderer/camera';
-import { SplatRenderer, loadSplatScene } from './renderer/splat-renderer';
+import { SplatRenderer, loadSplatScene, parseSplatBuffer, parsePlyBuffer } from './renderer/splat-renderer';
 import { SyncManager } from './collab/sync';
 import { PinManager } from './annotations/pins';
 import { CursorManager } from './collab/cursors';
@@ -72,14 +72,98 @@ async function startViewer(roomId: string) {
     return;
   }
 
-  const splatData = await loadSplatScene('/sample.splat');
-  renderer.loadSplats(splatData);
+  // Loading overlay helpers
+  const loadingOverlay = document.getElementById('loading-overlay')!;
+  const progressBar = document.getElementById('loading-progress-bar')!;
+  const progressText = document.getElementById('loading-progress-text')!;
 
-  function frame() {
-    renderer.render();
+  function showLoading() {
+    loadingOverlay.classList.add('active');
+    progressBar.style.width = '0%';
+    progressText.textContent = '0%';
+  }
+
+  function updateProgress(fraction: number) {
+    const pct = Math.round(fraction * 100);
+    progressBar.style.width = `${pct}%`;
+    progressText.textContent = `${pct}%`;
+  }
+
+  function hideLoading() {
+    loadingOverlay.classList.remove('active');
+  }
+
+  // Load default sample
+  showLoading();
+  try {
+    const splatData = await loadSplatScene('/sample.splat', updateProgress);
+    renderer.loadSplats(splatData);
+  } finally {
+    hideLoading();
+  }
+
+  let animating = false;
+  function startRenderLoop() {
+    if (animating) return;
+    animating = true;
+    function frame() {
+      renderer.render();
+      requestAnimationFrame(frame);
+    }
     requestAnimationFrame(frame);
   }
-  requestAnimationFrame(frame);
+  startRenderLoop();
+
+  // Drag-and-drop support
+  const dropOverlay = document.getElementById('drop-overlay')!;
+  let dragCounter = 0;
+
+  document.addEventListener('dragenter', (e: DragEvent) => {
+    e.preventDefault();
+    dragCounter++;
+    if (dragCounter === 1) {
+      dropOverlay.classList.add('active');
+    }
+  });
+
+  document.addEventListener('dragleave', (e: DragEvent) => {
+    e.preventDefault();
+    dragCounter--;
+    if (dragCounter <= 0) {
+      dragCounter = 0;
+      dropOverlay.classList.remove('active');
+    }
+  });
+
+  document.addEventListener('dragover', (e: DragEvent) => {
+    e.preventDefault();
+  });
+
+  document.addEventListener('drop', async (e: DragEvent) => {
+    e.preventDefault();
+    dragCounter = 0;
+    dropOverlay.classList.remove('active');
+
+    const file = e.dataTransfer?.files[0];
+    if (!file) return;
+
+    const name = file.name.toLowerCase();
+    if (!name.endsWith('.splat') && !name.endsWith('.ply')) return;
+
+    showLoading();
+    try {
+      const buffer = await file.arrayBuffer();
+      updateProgress(1);
+
+      const data = name.endsWith('.ply')
+        ? parsePlyBuffer(buffer)
+        : parseSplatBuffer(buffer);
+
+      renderer.loadSplats(data);
+    } finally {
+      hideLoading();
+    }
+  });
 }
 
 function init() {

@@ -298,10 +298,48 @@ export class SplatRenderer {
  *   color:    4x u8  (4 bytes)
  *   rotation: 4x u8  (4 bytes)
  */
-export async function loadSplatFile(url: string): Promise<SplatData> {
+/** Fetch with progress callback (0-1). Falls back to normal fetch when streaming unsupported. */
+async function fetchWithProgress(
+  url: string,
+  onProgress?: (fraction: number) => void
+): Promise<ArrayBuffer> {
   const resp = await fetch(url);
-  if (!resp.ok) throw new Error(`Failed to fetch splat file: ${resp.status}`);
-  const buffer = await resp.arrayBuffer();
+  if (!resp.ok) throw new Error(`Failed to fetch: ${resp.status}`);
+
+  const contentLength = resp.headers.get('Content-Length');
+  if (!contentLength || !resp.body) {
+    const buffer = await resp.arrayBuffer();
+    onProgress?.(1);
+    return buffer;
+  }
+
+  const total = parseInt(contentLength, 10);
+  const reader = resp.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let received = 0;
+
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    received += value.byteLength;
+    onProgress?.(total > 0 ? received / total : 0);
+  }
+
+  const buffer = new Uint8Array(received);
+  let offset = 0;
+  for (const chunk of chunks) {
+    buffer.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return buffer.buffer;
+}
+
+export async function loadSplatFile(
+  url: string,
+  onProgress?: (fraction: number) => void
+): Promise<SplatData> {
+  const buffer = await fetchWithProgress(url, onProgress);
 
   const BYTES_PER_SPLAT = 32;
   const count = Math.floor(buffer.byteLength / BYTES_PER_SPLAT);
@@ -377,11 +415,8 @@ function readPlyValue(view: DataView, offset: number, type: string): number {
  *   opacity           — opacity (sigmoid-encoded float or uchar)
  *   rot_0..3         — rotation quaternion (ignored for now)
  */
-export async function loadPlyFile(url: string): Promise<SplatData> {
-  const resp = await fetch(url);
-  if (!resp.ok) throw new Error(`Failed to fetch PLY file: ${resp.status}`);
-  const buffer = await resp.arrayBuffer();
-
+/** Parse a .ply binary buffer containing Gaussian splat data */
+export function parsePlyBuffer(buffer: ArrayBuffer): SplatData {
   // Parse ASCII header
   const headerBytes = new Uint8Array(buffer);
   let headerEnd = -1;
@@ -540,11 +575,55 @@ export async function loadPlyFile(url: string): Promise<SplatData> {
   return { positions, colors, covariances, count: vertexCount };
 }
 
+export async function loadPlyFile(
+  url: string,
+  onProgress?: (fraction: number) => void
+): Promise<SplatData> {
+  const buffer = await fetchWithProgress(url, onProgress);
+  return parsePlyBuffer(buffer);
+}
+
 /** Load a splat scene file, auto-detecting format from URL extension */
-export async function loadSplatScene(url: string): Promise<SplatData> {
+export async function loadSplatScene(
+  url: string,
+  onProgress?: (fraction: number) => void
+): Promise<SplatData> {
   const pathname = new URL(url, 'file://').pathname.toLowerCase();
   if (pathname.endsWith('.ply')) {
-    return loadPlyFile(url);
+    return loadPlyFile(url, onProgress);
   }
-  return loadSplatFile(url);
+  return loadSplatFile(url, onProgress);
+}
+
+/** Parse a .splat buffer loaded from a dropped file */
+export function parseSplatBuffer(buffer: ArrayBuffer): SplatData {
+  const BYTES_PER_SPLAT = 32;
+  const count = Math.floor(buffer.byteLength / BYTES_PER_SPLAT);
+
+  const positions   = new Float32Array(count * 3);
+  const colors      = new Float32Array(count * 4);
+  const covariances = new Float32Array(count * 6);
+
+  const view = new DataView(buffer);
+
+  for (let i = 0; i < count; i++) {
+    const offset = i * BYTES_PER_SPLAT;
+    positions[i * 3 + 0] = view.getFloat32(offset + 0,  true);
+    positions[i * 3 + 1] = view.getFloat32(offset + 4,  true);
+    positions[i * 3 + 2] = view.getFloat32(offset + 8,  true);
+
+    const sx = view.getFloat32(offset + 12, true);
+    const sy = view.getFloat32(offset + 16, true);
+    const sz = view.getFloat32(offset + 20, true);
+    covariances[i * 6 + 0] = sx * sx;
+    covariances[i * 6 + 3] = sy * sy;
+    covariances[i * 6 + 5] = sz * sz;
+
+    colors[i * 4 + 0] = view.getUint8(offset + 24) / 255;
+    colors[i * 4 + 1] = view.getUint8(offset + 25) / 255;
+    colors[i * 4 + 2] = view.getUint8(offset + 26) / 255;
+    colors[i * 4 + 3] = view.getUint8(offset + 27) / 255;
+  }
+
+  return { positions, colors, covariances, count };
 }

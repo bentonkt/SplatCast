@@ -17,6 +17,7 @@ import { TaskManager } from './collab/tasks';
 import { HeatmapOverlay } from './annotations/heatmap';
 import { SplatInspector } from './renderer/inspector';
 import { TimelinePanel } from './collab/timeline';
+import { CrossSectionExporter } from './collab/cross-section';
 import { parseRoute, generateRoomId, navigateToRoom } from './router';
 
 function showLobby() {
@@ -128,6 +129,9 @@ async function startViewer(roomId: string) {
   const clipPlanesPanel = new ClipPlanesPanel(sync, renderer);
   void clipPlanesPanel;
 
+  const crossSectionExporter = new CrossSectionExporter(sync, renderer);
+  void crossSectionExporter;
+
   const lassoPanel = new LassoPanel(canvas, sync, renderer, camera);
   void lassoPanel;
 
@@ -166,6 +170,7 @@ async function startViewer(roomId: string) {
     const bounds = computeBounds(splatData);
     camera.frameBounds(bounds.center, bounds.extent);
     clipPlanesPanel.setRange(bounds.extent * 1.5);
+    crossSectionExporter.setRange(bounds.extent * 1.5);
   } finally {
     hideLoading();
   }
@@ -262,6 +267,7 @@ async function startViewer(roomId: string) {
       const droppedBounds = computeBounds(data);
       camera.frameBounds(droppedBounds.center, droppedBounds.extent);
       clipPlanesPanel.setRange(droppedBounds.extent * 1.5);
+      crossSectionExporter.setRange(droppedBounds.extent * 1.5);
     } finally {
       hideLoading();
     }

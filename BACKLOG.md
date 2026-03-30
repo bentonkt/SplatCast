@@ -1,7 +1,6 @@
 # SplatCast Backlog
 
 ## In Progress
-- [ ] Annotation heatmap overlay — 2D density visualization projecting annotation clusters onto the viewport to surface feedback hotspots
 
 ## Up Next
 - [ ] Splat point inspector — click any point to see raw Gaussian splat properties (XYZ, RGB, opacity, scale) in a popover tooltip
@@ -11,6 +10,7 @@
 ## Discovered
 
 ## Done
+- [x] Annotation heatmap overlay — 2D density visualization projecting annotation clusters onto the viewport to surface feedback hotspots — PR https://github.com/bentonkt/SplatCast/pull/26
 - [x] Annotation resolve/unresolve — mark annotations as resolved with filtering toggle, synced across users for review workflows — PR https://github.com/bentonkt/SplatCast/pull/25
 - [x] Annotation export to JSON/CSV — export all annotations, measurements, threads, and bookmarks as structured data with 3D coordinates for external tools — PR https://github.com/bentonkt/SplatCast/pull/24
 - [x] Side-by-side scene comparison — load two splat files into split or overlay viewports with synced camera controls for reviewing changes between captures — PR https://github.com/bentonkt/SplatCast/pull/23

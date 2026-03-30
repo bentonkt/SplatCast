@@ -1,9 +1,9 @@
 # SplatCast Backlog
 
 ## In Progress
+- [ ] Freehand drawing annotations — draw on the scene with mouse, strokes synced via Yjs
 
 ## Up Next
-- [ ] Freehand drawing annotations — draw on the scene with mouse, strokes synced via Yjs
 - [ ] Color-coded per-user annotations — assign consistent colors per userId
 - [ ] Room system — URL-based room IDs (/room/<id>), each room is a separate Yjs doc
 - [ ] Annotation persistence — save/load annotation state to server or localStorage

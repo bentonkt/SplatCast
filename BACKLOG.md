@@ -1,9 +1,9 @@
 # SplatCast Backlog
 
 ## In Progress
+- [ ] User presence sidebar — show connected users with their colors
 
 ## Up Next
-- [ ] User presence sidebar — show connected users with their colors
 - [ ] Undo/redo — Yjs undo manager for annotation changes
 
 ## Discovered

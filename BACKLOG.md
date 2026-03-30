@@ -1,9 +1,9 @@
 # SplatCast Backlog
 
 ## In Progress
+- [ ] Spatial audio notes — record short audio clips attached to 3D positions, click speaker icon to play back
 
 ## Up Next
-- [ ] Spatial audio notes — record short audio clips attached to 3D positions, click speaker icon to play back
 
 ## Discovered
 

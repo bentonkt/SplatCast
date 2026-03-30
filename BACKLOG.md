@@ -1,9 +1,9 @@
 # SplatCast Backlog
 
 ## In Progress
+- [ ] WebXR immersive viewing — enter the shared splat scene in AR or VR via the WebXR Device API, with annotations and presence synced across flat-screen and immersive users
 
 ## Up Next
-- [ ] WebXR immersive viewing — enter the shared splat scene in AR or VR via the WebXR Device API, with annotations and presence synced across flat-screen and immersive users
 - [ ] Spatial notification subscriptions — draw a 3D bounding box to "watch" a region and receive in-app notifications when other users add annotations, tasks, or measurements inside that volume
 - [ ] BCF issue export — export spatial tasks and annotations as BCF-format files (.bcfzip) with viewpoint snapshots and camera positions for integration with BIM coordination platforms
 

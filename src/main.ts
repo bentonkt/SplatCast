@@ -115,7 +115,6 @@ async function startViewer(roomId: string) {
   void lassoPanel;
 
   const comparePanel = new ComparePanel(canvas, camera, renderer);
-  void comparePanel;
 
   // Loading overlay helpers
   const loadingOverlay = document.getElementById('loading-overlay')!;
@@ -165,7 +164,9 @@ async function startViewer(roomId: string) {
         }
       }
 
-      renderer.render();
+      if (!comparePanel.isActive()) {
+        renderer.render();
+      }
 
       // Broadcast local camera state at ~10fps, only when changed
       const now = performance.now();

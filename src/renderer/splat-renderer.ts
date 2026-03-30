@@ -252,6 +252,15 @@ export class SplatRenderer {
     this.drawCount = count;
   }
 
+  clearSplats() {
+    this.vertexCount = 0;
+    this.splatPositions = null;
+    this.sortedIndices = null;
+    this.depthBuffer = null;
+    if (this.vertexBuffer) { this.vertexBuffer.destroy(); this.vertexBuffer = null; }
+    if (this.indexBuffer) { this.indexBuffer.destroy(); this.indexBuffer = null; }
+  }
+
   /** Sort splat indices back-to-front by view-space depth, filtering hidden */
   private sortByDepth(viewMatrix: Float32Array) {
     if (!this.splatPositions || !this.sortedIndices || !this.depthBuffer) return;

@@ -147,12 +147,12 @@ export class ComparePanel {
     this.leftRenderer = new SplatRenderer(this.leftCanvas, this.leftCamera);
     this.rightRenderer = new SplatRenderer(this.rightCanvas, this.rightCamera);
 
-    if (!this.leftRenderer || !this.rightRenderer) return;
+    if (!this.leftRenderer || !this.rightRenderer) { this.deactivate(); return; }
     const leftOk = await this.leftRenderer.init();
-    if (!this.active || !this.rightRenderer) return;
+    if (!this.active || !this.rightRenderer) { this.deactivate(); return; }
     const rightOk = await this.rightRenderer.init();
 
-    if (!leftOk || !rightOk || !this.active) return;
+    if (!leftOk || !rightOk || !this.active) { this.deactivate(); return; }
 
     // Load current scene data into left pane by re-fetching the default sample
     try {
@@ -364,12 +364,20 @@ export class ComparePanel {
     this.leftLabel = this.rightLabel;
     this.rightLabel = tmpLabel;
 
-    // Reload into renderers
-    if (this.leftRenderer && this.leftData) {
-      this.leftRenderer.loadSplats(this.leftData);
+    // Reload into renderers (clear when data is null)
+    if (this.leftRenderer) {
+      if (this.leftData) {
+        this.leftRenderer.loadSplats(this.leftData);
+      } else {
+        this.leftRenderer.clearSplats();
+      }
     }
-    if (this.rightRenderer && this.rightData) {
-      this.rightRenderer.loadSplats(this.rightData);
+    if (this.rightRenderer) {
+      if (this.rightData) {
+        this.rightRenderer.loadSplats(this.rightData);
+      } else {
+        this.rightRenderer.clearSplats();
+      }
     }
 
     this.updateLabels();

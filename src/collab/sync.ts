@@ -30,7 +30,7 @@ export class SyncManager {
     this.annotationMap.set(annotation.id, annotation);
   }
 
-  updateAnnotation(id: string, updates: Partial<Pick<Annotation, 'label' | 'parentId'>>) {
+  updateAnnotation(id: string, updates: Partial<Pick<Annotation, 'label' | 'parentId' | 'resolved'>>) {
     const existing = this.annotationMap.get(id);
     if (existing) {
       this.annotationMap.set(id, { ...existing, ...updates });

@@ -1,6 +1,6 @@
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
-import { Annotation, Bookmark, ClipPlanes, CursorPresence, OrbitalState, Stroke, TourState, UserPresence } from '../types';
+import { Annotation, Bookmark, ClipPlanes, CursorPresence, OrbitalState, SpatialTask, Stroke, TourState, UserPresence } from '../types';
 import { Awareness } from 'y-protocols/awareness';
 
 export class SyncManager {
@@ -12,6 +12,7 @@ export class SyncManager {
   bookmarks: Y.Map<Bookmark>;
   clipPlanes: Y.Map<number>;
   hiddenSplats: Y.Map<string>;
+  tasks: Y.Map<SpatialTask>;
   undoManager: Y.UndoManager;
 
   constructor(roomId: string, serverUrl = 'ws://localhost:4000') {
@@ -23,6 +24,7 @@ export class SyncManager {
     this.bookmarks = this.doc.getMap<Bookmark>('bookmarks');
     this.clipPlanes = this.doc.getMap<number>('clipPlanes');
     this.hiddenSplats = this.doc.getMap<string>('hiddenSplatsMap');
+    this.tasks = this.doc.getMap<SpatialTask>('spatialTasks');
     this.undoManager = new Y.UndoManager([this.annotationMap, this.strokes, this.bookmarks], { captureTimeout: 0 });
   }
 
@@ -253,6 +255,31 @@ export class SyncManager {
       }
     }
     return null;
+  }
+
+  addTask(task: SpatialTask) {
+    this.tasks.set(task.id, task);
+  }
+
+  updateTask(id: string, updates: Partial<Pick<SpatialTask, 'title' | 'assignee' | 'priority' | 'status'>>) {
+    const existing = this.tasks.get(id);
+    if (existing) {
+      this.tasks.set(id, { ...existing, ...updates });
+    }
+  }
+
+  removeTask(id: string) {
+    this.tasks.delete(id);
+  }
+
+  getTasks(): SpatialTask[] {
+    return Array.from(this.tasks.values());
+  }
+
+  onTasksChange(callback: (tasks: SpatialTask[]) => void) {
+    this.tasks.observe(() => {
+      callback(this.getTasks());
+    });
   }
 
   destroy() {

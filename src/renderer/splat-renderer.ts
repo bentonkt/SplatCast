@@ -76,6 +76,7 @@ export class SplatRenderer {
   // Hidden splat indices — filtered out during depth sort
   private hiddenSet: Set<number> = new Set();
   private drawCount = 0;
+  private loadedData: SplatData | null = null;
 
   constructor(private canvas: HTMLCanvasElement, private camera: OrbitCamera) {}
 
@@ -198,6 +199,7 @@ export class SplatRenderer {
 
   loadSplats(data: SplatData) {
     if (!this.device) return;
+    this.loadedData = data;
 
     const count = data.count;
     const buf = new Float32Array(count * 8); // 8 floats per vertex = 32 bytes
@@ -254,6 +256,7 @@ export class SplatRenderer {
 
   clearSplats() {
     this.vertexCount = 0;
+    this.loadedData = null;
     this.splatPositions = null;
     this.sortedIndices = null;
     this.depthBuffer = null;
@@ -354,6 +357,21 @@ export class SplatRenderer {
 
   getSplatPositions(): Float32Array | null {
     return this.splatPositions;
+  }
+
+  getSplatData(): SplatData | null {
+    return this.loadedData;
+  }
+
+  getHiddenSet(): Set<number> {
+    return this.hiddenSet;
+  }
+
+  getClipBounds(): { min: [number, number, number]; max: [number, number, number] } {
+    return {
+      min: [this.clipData[0], this.clipData[1], this.clipData[2]],
+      max: [this.clipData[4], this.clipData[5], this.clipData[6]],
+    };
   }
 
   setClipPlanes(planes: ClipPlanes) {

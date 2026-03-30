@@ -62,18 +62,34 @@ export class DrawManager {
     }
   };
 
+  private normalizePoint(e: MouseEvent): StrokePoint {
+    const rect = this.canvas.getBoundingClientRect();
+    return {
+      x: (e.clientX - rect.left) / rect.width,
+      y: (e.clientY - rect.top) / rect.height,
+    };
+  }
+
+  private denormalizePoint(p: StrokePoint): StrokePoint {
+    const rect = this.canvas.getBoundingClientRect();
+    return {
+      x: p.x * rect.width + rect.left,
+      y: p.y * rect.height + rect.top,
+    };
+  }
+
   private onMouseDown = (e: MouseEvent) => {
     if (!this.drawingEnabled) return;
     e.preventDefault();
     e.stopImmediatePropagation();
     this.drawing = true;
-    this.currentStroke = [{ x: e.clientX, y: e.clientY }];
+    this.currentStroke = [this.normalizePoint(e)];
   };
 
   private onMouseMove = (e: MouseEvent) => {
     if (!this.drawing) return;
     e.stopImmediatePropagation();
-    this.currentStroke.push({ x: e.clientX, y: e.clientY });
+    this.currentStroke.push(this.normalizePoint(e));
     this.renderStrokes();
   };
 
@@ -104,7 +120,8 @@ export class DrawManager {
 
   private pointsToPathData(points: StrokePoint[]): string {
     if (points.length === 0) return '';
-    const [first, ...rest] = points;
+    const pixelPoints = points.map((p) => this.denormalizePoint(p));
+    const [first, ...rest] = pixelPoints;
     return `M ${first.x} ${first.y}` + rest.map((p) => ` L ${p.x} ${p.y}`).join('');
   }
 
@@ -121,7 +138,7 @@ export class DrawManager {
       path.classList.add('stroke-path');
       this.svgOverlay.appendChild(path);
     }
-    // Render current in-progress stroke
+    // Render current in-progress stroke (already in normalized coords)
     if (this.currentStroke.length > 1) {
       const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
       path.setAttribute('d', this.pointsToPathData(this.currentStroke));

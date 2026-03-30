@@ -1,7 +1,6 @@
 # SplatCast Backlog
 
 ## In Progress
-- [ ] Screenshot export — capture the current viewport as PNG with annotations baked in
 
 ## Up Next
 - [ ] Annotation threading — reply to pins to create comment threads for review discussions
@@ -10,6 +9,7 @@
 ## Discovered
 
 ## Done
+- [x] Screenshot export — capture the current viewport as PNG with annotations baked in — PR https://github.com/bentonkt/SplatCast/pull/17
 - [x] Measurement tool — click two points to measure distance with a synced line and label — PR https://github.com/bentonkt/SplatCast/pull/16
 - [x] Real Gaussian splat test fixtures — real 3DGS ChristmasTree scene (10K splats), full covariance from rotation quaternions, camera auto-framing — PR https://github.com/bentonkt/SplatCast/pull/15
 - [x] Viewpoint bookmarks — save named camera positions that any user can snap to — PR https://github.com/bentonkt/SplatCast/pull/14

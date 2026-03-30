@@ -23,6 +23,9 @@ export class DrawManager {
     this.canvas.addEventListener('mousedown', this.onMouseDown, { capture: true });
     window.addEventListener('mousemove', this.onMouseMove, { capture: true });
     window.addEventListener('mouseup', this.onMouseUp, { capture: true });
+    this.canvas.addEventListener('touchstart', this.onTouchStart, { capture: true });
+    this.canvas.addEventListener('touchmove', this.onTouchMove, { capture: true });
+    this.canvas.addEventListener('touchend', this.onTouchEnd, { capture: true });
     document.addEventListener('keydown', this.onKeyDown);
 
     this.sync.onStrokesChange((strokes) => {
@@ -62,11 +65,11 @@ export class DrawManager {
     }
   };
 
-  private normalizePoint(e: MouseEvent): StrokePoint {
+  private normalizePoint(clientX: number, clientY: number): StrokePoint {
     const rect = this.canvas.getBoundingClientRect();
     return {
-      x: (e.clientX - rect.left) / rect.width,
-      y: (e.clientY - rect.top) / rect.height,
+      x: (clientX - rect.left) / rect.width,
+      y: (clientY - rect.top) / rect.height,
     };
   }
 
@@ -83,19 +86,46 @@ export class DrawManager {
     e.preventDefault();
     e.stopImmediatePropagation();
     this.drawing = true;
-    this.currentStroke = [this.normalizePoint(e)];
+    this.currentStroke = [this.normalizePoint(e.clientX, e.clientY)];
   };
 
   private onMouseMove = (e: MouseEvent) => {
     if (!this.drawing) return;
     e.stopImmediatePropagation();
-    this.currentStroke.push(this.normalizePoint(e));
+    this.currentStroke.push(this.normalizePoint(e.clientX, e.clientY));
     this.renderStrokes();
   };
 
   private onMouseUp = (e: MouseEvent) => {
     if (!this.drawing) return;
     e.stopImmediatePropagation();
+    this.finishStroke();
+  };
+
+  private onTouchStart = (e: TouchEvent) => {
+    if (!this.drawingEnabled || e.touches.length !== 1) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    this.drawing = true;
+    const t = e.touches[0];
+    this.currentStroke = [this.normalizePoint(t.clientX, t.clientY)];
+  };
+
+  private onTouchMove = (e: TouchEvent) => {
+    if (!this.drawing || e.touches.length !== 1) return;
+    e.stopImmediatePropagation();
+    const t = e.touches[0];
+    this.currentStroke.push(this.normalizePoint(t.clientX, t.clientY));
+    this.renderStrokes();
+  };
+
+  private onTouchEnd = (e: TouchEvent) => {
+    if (!this.drawing) return;
+    e.stopImmediatePropagation();
+    this.finishStroke();
+  };
+
+  private finishStroke() {
     this.drawing = false;
     if (this.currentStroke.length > 1) {
       const stroke: Stroke = {
@@ -110,7 +140,7 @@ export class DrawManager {
     } else {
       this.currentStroke = [];
     }
-  };
+  }
 
   private getColor(): string {
     const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#ffeaa7', '#dda0dd'];
@@ -157,6 +187,9 @@ export class DrawManager {
     this.canvas.removeEventListener('mousedown', this.onMouseDown, { capture: true });
     window.removeEventListener('mousemove', this.onMouseMove, { capture: true });
     window.removeEventListener('mouseup', this.onMouseUp, { capture: true });
+    this.canvas.removeEventListener('touchstart', this.onTouchStart, { capture: true });
+    this.canvas.removeEventListener('touchmove', this.onTouchMove, { capture: true });
+    this.canvas.removeEventListener('touchend', this.onTouchEnd, { capture: true });
     document.removeEventListener('keydown', this.onKeyDown);
     this.svgOverlay.remove();
     const btn = document.getElementById('draw-toggle');

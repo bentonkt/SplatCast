@@ -11,10 +11,18 @@ export class OrbitCamera {
   private lastX = 0;
   private lastY = 0;
 
+  // Touch state
+  private lastTouchDistance = 0;
+  private lastTouchX = 0;
+  private lastTouchY = 0;
+
   private onMouseDown: (e: MouseEvent) => void;
   private onMouseMove: (e: MouseEvent) => void;
   private onMouseUp: (e: MouseEvent) => void;
   private onWheel: (e: WheelEvent) => void;
+  private onTouchStart: (e: TouchEvent) => void;
+  private onTouchMove: (e: TouchEvent) => void;
+  private onTouchEnd: (e: TouchEvent) => void;
 
   constructor(private canvas: HTMLCanvasElement) {
     this.onMouseDown = (e: MouseEvent) => {
@@ -43,10 +51,60 @@ export class OrbitCamera {
       this.radius = Math.max(0.5, Math.min(100, this.radius + e.deltaY * 0.01));
     };
 
+    this.onTouchStart = (e: TouchEvent) => {
+      e.preventDefault();
+      if (e.touches.length === 1) {
+        this.isDragging = true;
+        this.lastTouchX = e.touches[0].clientX;
+        this.lastTouchY = e.touches[0].clientY;
+      } else if (e.touches.length === 2) {
+        this.isDragging = false;
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        this.lastTouchDistance = Math.sqrt(dx * dx + dy * dy);
+      }
+    };
+
+    this.onTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+      if (e.touches.length === 1 && this.isDragging) {
+        const dx = e.touches[0].clientX - this.lastTouchX;
+        const dy = e.touches[0].clientY - this.lastTouchY;
+        this.lastTouchX = e.touches[0].clientX;
+        this.lastTouchY = e.touches[0].clientY;
+        this.theta -= dx * 0.005;
+        this.phi = Math.max(0.05, Math.min(Math.PI - 0.05, this.phi + dy * 0.005));
+      } else if (e.touches.length === 2) {
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (this.lastTouchDistance > 0) {
+          const scale = this.lastTouchDistance / dist;
+          this.radius = Math.max(0.5, Math.min(100, this.radius * scale));
+        }
+        this.lastTouchDistance = dist;
+      }
+    };
+
+    this.onTouchEnd = (e: TouchEvent) => {
+      if (e.touches.length === 0) {
+        this.isDragging = false;
+        this.lastTouchDistance = 0;
+      } else if (e.touches.length === 1) {
+        this.isDragging = true;
+        this.lastTouchX = e.touches[0].clientX;
+        this.lastTouchY = e.touches[0].clientY;
+        this.lastTouchDistance = 0;
+      }
+    };
+
     canvas.addEventListener('mousedown', this.onMouseDown);
     window.addEventListener('mousemove', this.onMouseMove);
     window.addEventListener('mouseup', this.onMouseUp);
     canvas.addEventListener('wheel', this.onWheel, { passive: false });
+    canvas.addEventListener('touchstart', this.onTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', this.onTouchMove, { passive: false });
+    canvas.addEventListener('touchend', this.onTouchEnd);
   }
 
   getPosition(): [number, number, number] {
@@ -86,6 +144,9 @@ export class OrbitCamera {
     window.removeEventListener('mousemove', this.onMouseMove);
     window.removeEventListener('mouseup', this.onMouseUp);
     this.canvas.removeEventListener('wheel', this.onWheel);
+    this.canvas.removeEventListener('touchstart', this.onTouchStart);
+    this.canvas.removeEventListener('touchmove', this.onTouchMove);
+    this.canvas.removeEventListener('touchend', this.onTouchEnd);
   }
 }
 

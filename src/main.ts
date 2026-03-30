@@ -17,7 +17,8 @@ async function init() {
   const renderer = new SplatRenderer(canvas, camera);
 
   // Collaboration works regardless of WebGPU availability
-  const sync = new SyncManager('default-room');
+  const roomId = new URLSearchParams(window.location.search).get('room') || 'default-room';
+  const sync = new SyncManager(roomId);
   const pins = new PinManager(canvas, sync);
 
   const gpuAvailable = await renderer.init();

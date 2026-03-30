@@ -9,8 +9,10 @@ export class TourPanel {
   private btn: HTMLButtonElement;
   private playing = false;
   private animationTimer: number | null = null;
+  private holdTimer: number | null = null;
   private currentIndex = 0;
   private tourBookmarks: Bookmark[] = [];
+  private isController = false;
   private indicator: HTMLDivElement;
 
   constructor(
@@ -85,6 +87,7 @@ export class TourPanel {
     this.tourBookmarks = [...bookmarks].sort((a, b) => a.timestamp - b.timestamp);
     this.currentIndex = 0;
     this.playing = true;
+    this.isController = true;
     this.btn.textContent = '\u23F9';
     this.btn.style.borderColor = '#4ecdc4';
 
@@ -99,12 +102,17 @@ export class TourPanel {
 
   private stopLocally() {
     this.playing = false;
+    this.isController = false;
     this.btn.textContent = '\u25B6';
     this.btn.style.borderColor = 'transparent';
     this.indicator.style.display = 'none';
     if (this.animationTimer !== null) {
       cancelAnimationFrame(this.animationTimer);
       this.animationTimer = null;
+    }
+    if (this.holdTimer !== null) {
+      clearTimeout(this.holdTimer);
+      this.holdTimer = null;
     }
   }
 
@@ -132,6 +140,7 @@ export class TourPanel {
 
     this.currentIndex = state.currentIndex;
     this.playing = true;
+    this.isController = false;
     this.btn.textContent = '\u23F9';
     this.btn.style.borderColor = '#4ecdc4';
     this.playStep();
@@ -174,14 +183,17 @@ export class TourPanel {
         this.animationTimer = requestAnimationFrame(animate);
       } else {
         // Hold at this bookmark, then advance
-        setTimeout(() => {
+        this.holdTimer = window.setTimeout(() => {
+          this.holdTimer = null;
           if (!this.playing) return;
           this.currentIndex++;
           if (this.currentIndex >= this.tourBookmarks.length) {
             this.stop();
             return;
           }
-          this.publishTourState();
+          if (this.isController) {
+            this.publishTourState();
+          }
           this.playStep();
         }, HOLD_MS);
       }

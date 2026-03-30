@@ -339,3 +339,212 @@ export async function loadSplatFile(url: string): Promise<SplatData> {
 
   return { positions, colors, covariances, count };
 }
+
+interface PlyProperty {
+  name: string;
+  type: string;
+  byteSize: number;
+}
+
+const PLY_TYPE_SIZES: Record<string, number> = {
+  char: 1, uchar: 1, int8: 1, uint8: 1,
+  short: 2, ushort: 2, int16: 2, uint16: 2,
+  int: 4, uint: 4, int32: 4, uint32: 4,
+  float: 4, float32: 4,
+  double: 8, float64: 8,
+};
+
+function readPlyValue(view: DataView, offset: number, type: string): number {
+  switch (type) {
+    case 'char':   case 'int8':    return view.getInt8(offset);
+    case 'uchar':  case 'uint8':   return view.getUint8(offset);
+    case 'short':  case 'int16':   return view.getInt16(offset, true);
+    case 'ushort': case 'uint16':  return view.getUint16(offset, true);
+    case 'int':    case 'int32':   return view.getInt32(offset, true);
+    case 'uint':   case 'uint32':  return view.getUint32(offset, true);
+    case 'float':  case 'float32': return view.getFloat32(offset, true);
+    case 'double': case 'float64': return view.getFloat64(offset, true);
+    default: throw new Error(`Unknown PLY type: ${type}`);
+  }
+}
+
+/**
+ * Load a .ply binary file containing Gaussian splat data.
+ * Supports binary_little_endian format with vertex properties:
+ *   x, y, z          — position
+ *   scale_0..2       — scale (or sx, sy, sz)
+ *   f_dc_0..2        — SH DC color (or red, green, blue as uchar)
+ *   opacity           — opacity (sigmoid-encoded float or uchar)
+ *   rot_0..3         — rotation quaternion (ignored for now)
+ */
+export async function loadPlyFile(url: string): Promise<SplatData> {
+  const resp = await fetch(url);
+  if (!resp.ok) throw new Error(`Failed to fetch PLY file: ${resp.status}`);
+  const buffer = await resp.arrayBuffer();
+
+  // Parse ASCII header
+  const headerBytes = new Uint8Array(buffer);
+  let headerEnd = -1;
+  for (let i = 0; i < Math.min(headerBytes.length, 4096); i++) {
+    if (headerBytes[i] === 0x65 && // 'e'
+        headerBytes[i + 1] === 0x6e && // 'n'
+        headerBytes[i + 2] === 0x64 && // 'd'
+        headerBytes[i + 3] === 0x5f && // '_'
+        headerBytes[i + 4] === 0x68 && // 'h'
+        headerBytes[i + 5] === 0x65 && // 'e'
+        headerBytes[i + 6] === 0x61 && // 'a'
+        headerBytes[i + 7] === 0x64 && // 'd'
+        headerBytes[i + 8] === 0x65 && // 'e'
+        headerBytes[i + 9] === 0x72) { // 'r'
+      // Find the newline after "end_header"
+      let j = i + 10;
+      while (j < headerBytes.length && headerBytes[j] !== 0x0a) j++;
+      headerEnd = j + 1;
+      break;
+    }
+  }
+  if (headerEnd === -1) throw new Error('Invalid PLY file: could not find end_header');
+
+  const headerText = new TextDecoder().decode(headerBytes.slice(0, headerEnd));
+  const headerLines = headerText.split('\n').map(l => l.trim());
+
+  if (headerLines[0] !== 'ply') throw new Error('Invalid PLY file: missing magic');
+
+  const formatLine = headerLines.find(l => l.startsWith('format '));
+  if (!formatLine || !formatLine.includes('binary_little_endian')) {
+    throw new Error('Only binary_little_endian PLY format is supported');
+  }
+
+  let vertexCount = 0;
+  const properties: PlyProperty[] = [];
+  let inVertexElement = false;
+
+  for (const line of headerLines) {
+    if (line.startsWith('element vertex')) {
+      vertexCount = parseInt(line.split(/\s+/)[2], 10);
+      inVertexElement = true;
+    } else if (line.startsWith('element ') && inVertexElement) {
+      inVertexElement = false;
+    } else if (line.startsWith('property ') && inVertexElement) {
+      const parts = line.split(/\s+/);
+      const type = parts[1];
+      const name = parts[2];
+      const byteSize = PLY_TYPE_SIZES[type];
+      if (byteSize === undefined) throw new Error(`Unknown PLY property type: ${type}`);
+      properties.push({ name, type, byteSize });
+    }
+  }
+
+  if (vertexCount === 0) throw new Error('PLY file has no vertices');
+
+  // Build property offset map
+  const propOffset: Record<string, { offset: number; type: string }> = {};
+  let stride = 0;
+  for (const prop of properties) {
+    propOffset[prop.name] = { offset: stride, type: prop.type };
+    stride += prop.byteSize;
+  }
+
+  const getProp = (name: string): { offset: number; type: string } | undefined => propOffset[name];
+
+  // Detect color property names
+  const hasShColor = getProp('f_dc_0') !== undefined;
+  const hasUcharColor = getProp('red') !== undefined;
+
+  // Detect scale property names
+  const hasScale = getProp('scale_0') !== undefined;
+  const hasAltScale = getProp('sx') !== undefined;
+
+  const positions   = new Float32Array(vertexCount * 3);
+  const colors      = new Float32Array(vertexCount * 4);
+  const covariances = new Float32Array(vertexCount * 6);
+
+  const dataView = new DataView(buffer, headerEnd);
+
+  for (let i = 0; i < vertexCount; i++) {
+    const base = i * stride;
+
+    // Position (required: x, y, z)
+    const xProp = getProp('x')!;
+    const yProp = getProp('y')!;
+    const zProp = getProp('z')!;
+    positions[i * 3 + 0] = readPlyValue(dataView, base + xProp.offset, xProp.type);
+    positions[i * 3 + 1] = readPlyValue(dataView, base + yProp.offset, yProp.type);
+    positions[i * 3 + 2] = readPlyValue(dataView, base + zProp.offset, zProp.type);
+
+    // Scale → diagonal covariance
+    let sx = 0.05, sy = 0.05, sz = 0.05;
+    if (hasScale) {
+      const s0 = getProp('scale_0')!;
+      const s1 = getProp('scale_1')!;
+      const s2 = getProp('scale_2')!;
+      // Gaussian splatting PLY files store log(scale)
+      sx = Math.exp(readPlyValue(dataView, base + s0.offset, s0.type));
+      sy = Math.exp(readPlyValue(dataView, base + s1.offset, s1.type));
+      sz = Math.exp(readPlyValue(dataView, base + s2.offset, s2.type));
+    } else if (hasAltScale) {
+      const sxP = getProp('sx')!;
+      const syP = getProp('sy')!;
+      const szP = getProp('sz')!;
+      sx = readPlyValue(dataView, base + sxP.offset, sxP.type);
+      sy = readPlyValue(dataView, base + syP.offset, syP.type);
+      sz = readPlyValue(dataView, base + szP.offset, szP.type);
+    }
+    covariances[i * 6 + 0] = sx * sx;
+    covariances[i * 6 + 3] = sy * sy;
+    covariances[i * 6 + 5] = sz * sz;
+
+    // Color
+    if (hasShColor) {
+      // SH DC coefficients → linear RGB (SH0 = C * 0.28209479...)
+      const SH_C0 = 0.28209479177387814;
+      const dc0 = getProp('f_dc_0')!;
+      const dc1 = getProp('f_dc_1')!;
+      const dc2 = getProp('f_dc_2')!;
+      colors[i * 4 + 0] = Math.max(0, Math.min(1, readPlyValue(dataView, base + dc0.offset, dc0.type) * SH_C0 + 0.5));
+      colors[i * 4 + 1] = Math.max(0, Math.min(1, readPlyValue(dataView, base + dc1.offset, dc1.type) * SH_C0 + 0.5));
+      colors[i * 4 + 2] = Math.max(0, Math.min(1, readPlyValue(dataView, base + dc2.offset, dc2.type) * SH_C0 + 0.5));
+    } else if (hasUcharColor) {
+      const rP = getProp('red')!;
+      const gP = getProp('green')!;
+      const bP = getProp('blue')!;
+      colors[i * 4 + 0] = readPlyValue(dataView, base + rP.offset, rP.type) / 255;
+      colors[i * 4 + 1] = readPlyValue(dataView, base + gP.offset, gP.type) / 255;
+      colors[i * 4 + 2] = readPlyValue(dataView, base + bP.offset, bP.type) / 255;
+    } else {
+      colors[i * 4 + 0] = 0.8;
+      colors[i * 4 + 1] = 0.8;
+      colors[i * 4 + 2] = 0.8;
+    }
+
+    // Opacity
+    const opacityProp = getProp('opacity');
+    if (opacityProp) {
+      const raw = readPlyValue(dataView, base + opacityProp.offset, opacityProp.type);
+      // Gaussian splatting stores opacity as logit (sigmoid-encoded)
+      if (opacityProp.type === 'float' || opacityProp.type === 'float32' || opacityProp.type === 'double' || opacityProp.type === 'float64') {
+        colors[i * 4 + 3] = 1.0 / (1.0 + Math.exp(-raw)); // sigmoid
+      } else {
+        colors[i * 4 + 3] = raw / 255;
+      }
+    } else {
+      const alphaProp = getProp('alpha');
+      if (alphaProp) {
+        colors[i * 4 + 3] = readPlyValue(dataView, base + alphaProp.offset, alphaProp.type) / 255;
+      } else {
+        colors[i * 4 + 3] = 1.0;
+      }
+    }
+  }
+
+  return { positions, colors, covariances, count: vertexCount };
+}
+
+/** Load a splat scene file, auto-detecting format from URL extension */
+export async function loadSplatScene(url: string): Promise<SplatData> {
+  const pathname = new URL(url, 'file://').pathname.toLowerCase();
+  if (pathname.endsWith('.ply')) {
+    return loadPlyFile(url);
+  }
+  return loadSplatFile(url);
+}

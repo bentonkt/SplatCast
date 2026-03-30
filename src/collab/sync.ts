@@ -11,6 +11,7 @@ export class SyncManager {
   strokes: Y.Array<Stroke>;
   bookmarks: Y.Map<Bookmark>;
   clipPlanes: Y.Map<number>;
+  hiddenSplats: Y.Map<string>;
   undoManager: Y.UndoManager;
 
   constructor(roomId: string, serverUrl = 'ws://localhost:4000') {
@@ -21,6 +22,7 @@ export class SyncManager {
     this.strokes = this.doc.getArray<Stroke>('strokes');
     this.bookmarks = this.doc.getMap<Bookmark>('bookmarks');
     this.clipPlanes = this.doc.getMap<number>('clipPlanes');
+    this.hiddenSplats = this.doc.getMap<string>('hiddenSplatsMap');
     this.undoManager = new Y.UndoManager([this.annotationMap, this.strokes, this.bookmarks], { captureTimeout: 0 });
   }
 
@@ -202,6 +204,22 @@ export class SyncManager {
   onTourStateChange(callback: (state: TourState | null) => void) {
     this.awareness.on('change', () => {
       callback(this.getTourState());
+    });
+  }
+
+  setHiddenSplats(indices: number[]) {
+    this.hiddenSplats.set('indices', JSON.stringify(indices));
+  }
+
+  getHiddenSplats(): number[] {
+    const raw = this.hiddenSplats.get('indices');
+    if (!raw) return [];
+    return JSON.parse(raw) as number[];
+  }
+
+  onHiddenSplatsChange(callback: (indices: number[]) => void) {
+    this.hiddenSplats.observe(() => {
+      callback(this.getHiddenSplats());
     });
   }
 

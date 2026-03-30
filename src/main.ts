@@ -5,6 +5,7 @@ import { PinManager } from './annotations/pins';
 import { CursorManager } from './collab/cursors';
 import { DrawManager } from './annotations/draw';
 import { PresenceSidebar } from './collab/presence-sidebar';
+import { UndoRedoToolbar } from './collab/undo-redo';
 import { parseRoute, generateRoomId, navigateToRoom } from './router';
 
 function showLobby() {
@@ -57,12 +58,14 @@ async function startViewer(roomId: string) {
   const cursors = new CursorManager(canvas, sync);
   const draw = new DrawManager(canvas, sync);
   const presence = new PresenceSidebar(sync);
+  const undoRedo = new UndoRedoToolbar(sync);
 
   // Suppress unused variable warnings — managers attach event listeners
   void pins;
   void cursors;
   void draw;
   void presence;
+  void undoRedo;
 
   const gpuAvailable = await renderer.init();
   if (!gpuAvailable) {

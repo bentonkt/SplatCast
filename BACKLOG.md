@@ -1,7 +1,6 @@
 # SplatCast Backlog
 
 ## In Progress
-- [ ] Color-coded per-user annotations — assign consistent colors per userId
 
 ## Up Next
 - [ ] Room system — URL-based room IDs (/room/<id>), each room is a separate Yjs doc
@@ -17,6 +16,7 @@
 ## Discovered
 
 ## Done
+- [x] Color-coded per-user annotations — assign consistent colors per userId — PR https://github.com/bentonkt/SplatCast/pull/4
 - [x] Freehand drawing annotations — draw on the scene with mouse, strokes synced via Yjs — PR https://github.com/bentonkt/SplatCast/pull/3
 - [x] Annotation types — add arrow and text label annotations — PR https://github.com/bentonkt/SplatCast/pull/2
 - [x] Multi-user cursor presence — PR https://github.com/bentonkt/SplatCast/pull/1

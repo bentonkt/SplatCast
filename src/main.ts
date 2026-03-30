@@ -12,6 +12,7 @@ import { TourPanel } from './collab/tour';
 import { LassoPanel } from './collab/lasso';
 import { ComparePanel } from './collab/compare';
 import { HeatmapOverlay } from './annotations/heatmap';
+import { SplatInspector } from './renderer/inspector';
 import { parseRoute, generateRoomId, navigateToRoom } from './router';
 
 function showLobby() {
@@ -119,6 +120,9 @@ async function startViewer(roomId: string) {
   void lassoPanel;
 
   const comparePanel = new ComparePanel(canvas, camera, renderer);
+
+  const splatInspector = new SplatInspector(canvas, renderer, camera);
+  void splatInspector;
 
   // Loading overlay helpers
   const loadingOverlay = document.getElementById('loading-overlay')!;

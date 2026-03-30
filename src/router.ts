@@ -11,10 +11,10 @@ export interface RouteResult {
 export function parseRoute(): RouteResult {
   const path = window.location.pathname;
 
-  // Match /room/<id> pattern
-  const match = path.match(/^\/room\/([a-zA-Z0-9_-]+)$/);
+  // Match /room/<id> pattern — decode to support URL-encoded characters
+  const match = path.match(/^\/room\/(.+)$/);
   if (match) {
-    return { type: 'room', roomId: match[1] };
+    return { type: 'room', roomId: decodeURIComponent(match[1]) };
   }
 
   // Also support legacy ?room= query param for backwards compat
@@ -37,5 +37,5 @@ export function generateRoomId(): string {
 }
 
 export function navigateToRoom(roomId: string): void {
-  window.location.href = `/room/${roomId}`;
+  window.location.href = `/room/${encodeURIComponent(roomId)}`;
 }

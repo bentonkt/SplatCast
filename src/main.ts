@@ -69,11 +69,27 @@ async function startViewer(roomId: string) {
   const bookmarkPanel = new BookmarkPanel(sync, camera);
   const tourPanel = new TourPanel(sync, camera);
 
+  // Follow mode: apply remote camera when following
+  let followingUserId: string | null = null;
+
+  presence.setFollowChangeHandler((userId) => {
+    followingUserId = userId;
+  });
+
+  // Unfollow on local camera interaction
+  const unfollowOnInteraction = () => {
+    if (followingUserId) {
+      presence.unfollow();
+    }
+  };
+  canvas.addEventListener('mousedown', unfollowOnInteraction);
+  canvas.addEventListener('wheel', unfollowOnInteraction);
+  canvas.addEventListener('touchstart', unfollowOnInteraction);
+
   // Suppress unused variable warnings — managers attach event listeners
   void pins;
   void cursors;
   void draw;
-  void presence;
   void undoRedo;
   void bookmarkPanel;
   void tourPanel;
@@ -131,11 +147,40 @@ async function startViewer(roomId: string) {
   }
 
   let animating = false;
+  let lastBroadcastTime = 0;
+  let lastBroadcastState: { theta: number; phi: number; radius: number; target: [number, number, number] } | null = null;
   function startRenderLoop() {
     if (animating) return;
     animating = true;
     function frame() {
+      // Apply followed user's camera
+      if (followingUserId) {
+        const remoteCam = sync.getCameraForUser(followingUserId);
+        if (remoteCam) {
+          camera.setOrbitalState(remoteCam);
+        }
+      }
+
       renderer.render();
+
+      // Broadcast local camera state at ~10fps, only when changed
+      const now = performance.now();
+      if (now - lastBroadcastTime > 100) {
+        const currentState = camera.getOrbitalState();
+        const changed = !lastBroadcastState
+          || currentState.theta !== lastBroadcastState.theta
+          || currentState.phi !== lastBroadcastState.phi
+          || currentState.radius !== lastBroadcastState.radius
+          || currentState.target[0] !== lastBroadcastState.target[0]
+          || currentState.target[1] !== lastBroadcastState.target[1]
+          || currentState.target[2] !== lastBroadcastState.target[2];
+        if (changed) {
+          lastBroadcastTime = now;
+          lastBroadcastState = currentState;
+          sync.setLocalCamera(currentState);
+        }
+      }
+
       requestAnimationFrame(frame);
     }
     requestAnimationFrame(frame);

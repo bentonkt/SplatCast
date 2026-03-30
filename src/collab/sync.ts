@@ -1,6 +1,6 @@
 import * as Y from 'yjs';
 import { WebsocketProvider } from 'y-websocket';
-import { Annotation, Bookmark, ClipPlanes, CursorPresence, Stroke, TourState, UserPresence } from '../types';
+import { Annotation, Bookmark, ClipPlanes, CursorPresence, OrbitalState, Stroke, TourState, UserPresence } from '../types';
 import { Awareness } from 'y-protocols/awareness';
 
 export class SyncManager {
@@ -221,6 +221,38 @@ export class SyncManager {
     this.hiddenSplats.observe(() => {
       callback(this.getHiddenSplats());
     });
+  }
+
+  setLocalCamera(state: OrbitalState) {
+    this.awareness.setLocalStateField('camera', state);
+  }
+
+  onCameraChange(callback: (cameras: Map<number, { userId: string; camera: OrbitalState }>) => void) {
+    this.awareness.on('change', () => {
+      const cameras = new Map<number, { userId: string; camera: OrbitalState }>();
+      const localId = this.awareness.clientID;
+      this.awareness.getStates().forEach((state, clientId) => {
+        if (clientId !== localId && state['camera'] && state['presence']) {
+          const presence = state['presence'] as UserPresence;
+          cameras.set(clientId, {
+            userId: presence.userId,
+            camera: state['camera'] as OrbitalState,
+          });
+        }
+      });
+      callback(cameras);
+    });
+  }
+
+  getCameraForUser(userId: string): OrbitalState | null {
+    const states = this.awareness.getStates();
+    for (const [, state] of states) {
+      const presence = state['presence'] as UserPresence | undefined;
+      if (presence && presence.userId === userId && state['camera']) {
+        return state['camera'] as OrbitalState;
+      }
+    }
+    return null;
   }
 
   destroy() {

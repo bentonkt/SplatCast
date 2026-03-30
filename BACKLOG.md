@@ -1,9 +1,9 @@
 # SplatCast Backlog
 
 ## In Progress
+- [ ] Undo/redo — Yjs undo manager for annotation changes
 
 ## Up Next
-- [ ] Undo/redo — Yjs undo manager for annotation changes
 
 ## Discovered
 

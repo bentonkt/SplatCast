@@ -18,6 +18,7 @@ export class PinManager {
   private lastTapY = 0;
   private multiTouchActive = false;
   private openThreadPinId: string | null = null;
+  private showResolved = true;
 
   constructor(
     private canvas: HTMLCanvasElement,
@@ -140,6 +141,30 @@ export class PinManager {
     });
     toolbar.appendChild(csvBtn);
 
+    // Separator before resolve filter
+    const sep2 = document.createElement('div');
+    sep2.style.cssText = 'width:1px;height:24px;background:rgba(255,255,255,0.2);margin:0 4px;';
+    toolbar.appendChild(sep2);
+
+    // Resolve filter toggle
+    const resolveBtn = document.createElement('button');
+    resolveBtn.className = 'toolbar-btn';
+    resolveBtn.id = 'resolve-filter-btn';
+    resolveBtn.textContent = '\u2705';
+    resolveBtn.title = 'Toggle resolved annotations (R)';
+    resolveBtn.style.cssText = `
+      width:36px;height:36px;border:2px solid #4ecdc4;border-radius:6px;
+      background:rgba(78,205,196,0.25);cursor:pointer;font-size:16px;
+      display:flex;align-items:center;justify-content:center;
+      color:white;pointer-events:auto;
+    `;
+    resolveBtn.addEventListener('click', () => {
+      this.showResolved = !this.showResolved;
+      this.updateResolveFilterButton(resolveBtn);
+      this.renderPins();
+    });
+    toolbar.appendChild(resolveBtn);
+
     this.updateToolbarSelection(toolbar);
     return toolbar;
   }
@@ -149,6 +174,18 @@ export class PinManager {
     this.arrowStart = null;
     this.measureStart = null;
     this.updateToolbarSelection(this.toolbar);
+  }
+
+  private updateResolveFilterButton(btn: HTMLButtonElement) {
+    if (this.showResolved) {
+      btn.style.borderColor = '#4ecdc4';
+      btn.style.background = 'rgba(78,205,196,0.25)';
+      btn.title = 'Hide resolved annotations (R)';
+    } else {
+      btn.style.borderColor = 'transparent';
+      btn.style.background = 'rgba(255,255,255,0.1)';
+      btn.title = 'Show resolved annotations (R)';
+    }
   }
 
   private updateToolbarSelection(toolbar: HTMLDivElement) {
@@ -177,6 +214,12 @@ export class PinManager {
     }
     if (e.key === 'e' && !e.ctrlKey && !e.metaKey && !e.altKey) {
       exportJSON(this.sync);
+    }
+    if (e.key === 'r' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      this.showResolved = !this.showResolved;
+      const btn = document.getElementById('resolve-filter-btn') as HTMLButtonElement | null;
+      if (btn) this.updateResolveFilterButton(btn);
+      this.renderPins();
     }
   };
 
@@ -294,8 +337,8 @@ export class PinManager {
 
   private renderPins() {
     this.overlay.innerHTML = '';
-    // Only render top-level annotations (not replies)
-    const topLevel = this.pins.filter((p) => !p.parentId);
+    // Only render top-level annotations (not replies), filtered by resolve state
+    const topLevel = this.pins.filter((p) => !p.parentId && (this.showResolved || !p.resolved));
     for (const pin of topLevel) {
       const annotationType = pin.type ?? 'pin';
       if (annotationType === 'pin') {
@@ -333,10 +376,31 @@ export class PinManager {
     dot.className = 'pin-dot';
     dot.style.cssText = `
       width:16px;height:16px;border-radius:50%;
-      background:${pin.color};border:2px solid white;
+      background:${pin.resolved ? '#666' : pin.color};border:2px solid ${pin.resolved ? '#999' : 'white'};
       box-shadow:0 2px 4px rgba(0,0,0,0.5);
+      ${pin.resolved ? 'opacity:0.5;' : ''}
     `;
     container.appendChild(dot);
+
+    // Resolve/unresolve button
+    const resolveBtn = document.createElement('button');
+    resolveBtn.className = 'resolve-btn';
+    resolveBtn.dataset.resolveBtn = 'true';
+    resolveBtn.textContent = pin.resolved ? '\u21A9' : '\u2713';
+    resolveBtn.title = pin.resolved ? 'Unresolve' : 'Resolve';
+    resolveBtn.style.cssText = `
+      position:absolute;top:-8px;left:-18px;
+      width:18px;height:18px;border-radius:50%;
+      background:${pin.resolved ? '#e67e22' : '#27ae60'};color:white;
+      border:1.5px solid white;cursor:pointer;font-size:11px;
+      display:flex;align-items:center;justify-content:center;
+      pointer-events:auto;padding:0;line-height:1;
+    `;
+    resolveBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.sync.updateAnnotation(pin.id, { resolved: !pin.resolved });
+    });
+    container.appendChild(resolveBtn);
 
     // Label (shown below pin if present)
     if (pin.label) {
@@ -349,8 +413,9 @@ export class PinManager {
         padding:2px 6px;border-radius:3px;white-space:nowrap;
         background:rgba(30,30,50,0.85);color:#fff;
         font:12px/1.3 system-ui,sans-serif;
-        border:1px solid ${pin.color};
+        border:1px solid ${pin.resolved ? '#666' : pin.color};
         pointer-events:none;
+        ${pin.resolved ? 'opacity:0.5;text-decoration:line-through;' : ''}
       `;
       container.appendChild(label);
     }
